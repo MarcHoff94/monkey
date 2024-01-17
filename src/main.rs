@@ -1,5 +1,5 @@
 fn main() {
-    let mut testlexer = lexer::new(String::from("let ; ,djflad;"));
+    let mut testlexer = lexer::new(String::from("let 4; ,djflad;"));
     println!("{:?}", testlexer.ch);
     println!("{:?}", testlexer.nextToken());
     println!("{:?}", testlexer.nextToken());
@@ -126,7 +126,7 @@ impl lexer {
     }
 
     fn nextToken(&mut self) -> token {
-        
+
         self.eat_whitespaces();
 
         let tok = match self.ch {
@@ -144,6 +144,8 @@ impl lexer {
                     let literal: String = self.read_identifier();
                     return token::new(TokenType::lookupKeyword(&literal), literal)
                     
+                }else if is_digit(self.ch) {
+                    token::new(TokenType::INT, String::from(self.ch))
                 } else {
                     token::new(TokenType::ILLEGAL, String::from("0"))
                 }
@@ -155,4 +157,8 @@ impl lexer {
 }
 pub fn is_letter(byte: char) -> bool {
     'a' <= byte && byte <= 'z' || 'A' <= byte && byte <= 'Z' || byte == '_'
+}
+
+pub fn is_digit(byte:char) -> bool {
+    '0' <= byte && byte <= '9'
 }
