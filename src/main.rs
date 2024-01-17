@@ -71,6 +71,11 @@ impl TokenType {
         let result = match keyword {
             "function" => TokenType::FUNCTION,
             "let" => TokenType::LET,
+            "true" => TokenType::TRUE,
+            "false" => TokenType::FALSE,
+            "if" => TokenType::IF,
+            "else" => TokenType::ELSE,
+            "return" => TokenType::RETURN,
             _ => TokenType::IDENT,
         };
         return result
