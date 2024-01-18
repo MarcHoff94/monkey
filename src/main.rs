@@ -1,24 +1,27 @@
 fn main() {
-    let mut testlexer = lexer::new(String::from("let 4; ,djflad;"));
+    let mut testlexer = Lexer::new(String::from("let 4; ,djflad;"));
+    let testtoken  = Token::new(TokenType::ASSIGN,String::from("="));
+    println!("{:?}", testtoken.tokentype);
+    println!("{:?}", testtoken.literal);
     println!("{:?}", testlexer.ch);
-    println!("{:?}", testlexer.nextToken());
-    println!("{:?}", testlexer.nextToken());
-    println!("{:?}", testlexer.nextToken());
-    println!("{:?}", testlexer.nextToken());
-    println!("{:?}", testlexer.nextToken());
+    println!("{:?}", testlexer.next_token());
+    println!("{:?}", testlexer.next_token());
+    println!("{:?}", testlexer.next_token());
+    println!("{:?}", testlexer.next_token());
+    println!("{:?}", testlexer.next_token());
     println!("{:?}", testlexer.input);
 
 }
 
 #[derive(Debug)]
-pub struct token{
+pub struct Token{
     tokentype: TokenType,
     literal: String,
 }
-impl token {
-    fn new(Type: TokenType, literal: String) -> token {
-        token {
-            tokentype: Type,
+impl Token {
+    fn new(tok_type: TokenType, literal: String) -> Token {
+        Token {
+            tokentype: tok_type,
             literal: literal,
         }
     }
@@ -67,7 +70,7 @@ pub enum TokenType {
     RETURN,
 }
 impl TokenType {
-    fn lookupKeyword(keyword: &str) -> TokenType {
+    fn lookup_keyword(keyword: &str) -> TokenType {
         let result = match keyword {
             "function" => TokenType::FUNCTION,
             "let" => TokenType::LET,
@@ -82,19 +85,19 @@ impl TokenType {
     }
 }
 #[derive(Debug)]
-pub struct lexer {
+pub struct Lexer {
     input: String,
     position: usize,
     read_position: usize,
     ch: char,
 }
-impl lexer {
-    fn new(input: String) -> lexer {
-        let mut l = lexer {
+impl Lexer {
+    fn new(input: String) -> Lexer {
+        let mut l = Lexer {
             input: input,
             position: 0,
             read_position: 0,
-            ch: char::from(0),
+            ch: '0',
         };
         l.read_char();
         return l
@@ -103,9 +106,9 @@ impl lexer {
 
     fn read_char(&mut self) {
         if self.read_position >= self.input.len() {
-            self.ch = char::from(0)
+            self.ch = '0'
         } else {
-            self.ch = self.input.chars().nth(self.read_position).unwrap_or(char::from(0));
+            self.ch = self.input.chars().nth(self.read_position).unwrap_or('0');
         }
         
         self.position = self.read_position;
@@ -130,29 +133,30 @@ impl lexer {
         }
     }
 
-    fn nextToken(&mut self) -> token {
+    fn next_token(&mut self) -> Token {
 
         self.eat_whitespaces();
 
         let tok = match self.ch {
-            '=' => token::new(TokenType::ASSIGN, self.ch.to_string()),
-            ';' => token::new(TokenType::SEMICOLON, self.ch.to_string()),
-            '(' => token::new(TokenType::LPAREN, self.ch.to_string()),
-            ')' => token::new(TokenType::RPAREN, self.ch.to_string()),
-            ',' => token::new(TokenType::COMMA, self.ch.to_string()),
-            '+' => token::new(TokenType::PLUS, self.ch.to_string()),
-            '{' => token::new(TokenType::LBRACE, self.ch.to_string()),
-            '}' => token::new(TokenType::RBRACE, self.ch.to_string()),
-            '0' => token::new(TokenType::EOF, self.ch.to_string()),
+            '=' => Token::new(TokenType::ASSIGN, self.ch.to_string()),
+            ';' => Token::new(TokenType::SEMICOLON, self.ch.to_string()),
+            '(' => Token::new(TokenType::LPAREN, self.ch.to_string()),
+            ')' => Token::new(TokenType::RPAREN, self.ch.to_string()),
+            ',' => Token::new(TokenType::COMMA, self.ch.to_string()),
+            '+' => Token::new(TokenType::PLUS, self.ch.to_string()),
+            '-' => Token::new(TokenType::MINUS, self.ch.to_string()),
+            '{' => Token::new(TokenType::LBRACE, self.ch.to_string()),
+            '}' => Token::new(TokenType::RBRACE, self.ch.to_string()),
+            '0' => Token::new(TokenType::EOF, self.ch.to_string()),
             _ => {
                 if is_letter(self.ch) {
                     let literal: String = self.read_identifier();
-                    return token::new(TokenType::lookupKeyword(&literal), literal)
+                    return Token::new(TokenType::lookup_keyword(&literal), literal)
                     
                 }else if is_digit(self.ch) {
-                    token::new(TokenType::INT, String::from(self.ch))
+                    Token::new(TokenType::INT, String::from(self.ch))
                 } else {
-                    token::new(TokenType::ILLEGAL, String::from("0"))
+                    Token::new(TokenType::ILLEGAL, String::from("0"))
                 }
             }
         };
