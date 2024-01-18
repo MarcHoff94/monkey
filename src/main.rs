@@ -1,5 +1,5 @@
 fn main() {
-    let mut testlexer = Lexer::new(String::from("let 4; ,djflad;"));
+    let mut testlexer = Lexer::new(String::from("let 400; ,djflad;"));
     let testtoken  = Token::new(TokenType::ASSIGN,String::from("="));
     println!("{:?}", testtoken.tokentype);
     println!("{:?}", testtoken.literal);
@@ -116,6 +116,18 @@ impl Lexer {
         self.read_position += 1;
     }
 
+    fn read_number(&mut self) -> String  {
+        let start_pos: usize = self.position;
+        while is_digit(self.ch) {
+            self.read_char()
+        }
+        let result = match self.input.get(start_pos..self.position) {
+            Some(x) => String::from(x),
+            None => panic!("tried to read a number and failed")
+        };
+        result
+    }
+
     fn read_identifier(&mut self) -> String  {
         let start_pos: usize = self.position;
         while is_letter(self.ch) {
@@ -123,7 +135,7 @@ impl Lexer {
         }
         let result = match self.input.get(start_pos..self.position) {
             Some(x) => String::from(x),
-            None => panic!("Error empty String")
+            None => panic!("tried to read a identifier and failed")
         };
         result
     }
@@ -158,7 +170,8 @@ impl Lexer {
                     return Token::new(TokenType::lookup_keyword(&literal), literal)
                     
                 }else if is_digit(self.ch) {
-                    Token::new(TokenType::INT, String::from(self.ch))
+                    let literal: String = self.read_number();
+                    return Token::new(TokenType::INT, literal)
                 } else {
                     Token::new(TokenType::ILLEGAL, String::from("0"))
                 }
