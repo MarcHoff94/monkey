@@ -1,3 +1,20 @@
+fn main() {
+    let mut testlexer = Lexer::new(String::from("let== 400; ,djflad;"));
+    let testtoken  = Token::new(TokenType::ASSIGN,String::from("="));
+    println!("{:?}", testtoken.tokentype);
+    println!("{:?}", testtoken.literal);
+    println!("{:?}", testlexer.ch);
+    println!("{:?}", testlexer.next_token());
+    println!("{:?}", testlexer.next_token());
+    println!("{:?}", testlexer.next_token());
+    println!("{:?}", testlexer.next_token());
+    println!("{:?}", testlexer.next_token());
+    println!("{:?}", testlexer.next_token());
+    println!("{:?}", testlexer.input);
+
+
+}
+
 #[derive(Debug)]
 pub struct Token{
     tokentype: TokenType,
@@ -26,12 +43,15 @@ pub enum TokenType {
     PLUSSELF,
     MINUS,
     MINUSSELF,
+    POWER,
     BANG,
     ASTERISK,
     SLASH,
 
     LT,
+    LTEQ,
     GT,
+    GTEQ,
 
     EQ,
     NOTEQ,
@@ -170,8 +190,9 @@ impl Lexer {
             '!' => self.make_two_char_token(TokenType::BANG, TokenType::NOTEQ, '='),
             '/' => Token::new(TokenType::SLASH, self.ch.to_string()),
             '*' => Token::new(TokenType::ASTERISK, self.ch.to_string()),
-            '<' => Token::new(TokenType::LT, self.ch.to_string()),
-            '>' => Token::new(TokenType::GT, self.ch.to_string()),
+            '^' => Token::new(TokenType::POWER, self.ch.to_string()),
+            '<' => self.make_two_char_token(TokenType::LT, TokenType::LTEQ, '='),
+            '>' => self.make_two_char_token(TokenType::GT, TokenType::GTEQ, '='),
             '{' => Token::new(TokenType::LBRACE, self.ch.to_string()),
             '}' => Token::new(TokenType::RBRACE, self.ch.to_string()),
             '0' => Token::new(TokenType::EOF, self.ch.to_string()),
