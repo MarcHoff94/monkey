@@ -9,6 +9,7 @@ fn main() {
     println!("{:?}", testlexer.next_token());
     println!("{:?}", testlexer.next_token());
     println!("{:?}", testlexer.next_token());
+    println!("{:?}", testlexer.next_token());
     println!("{:?}", testlexer.input);
 
 }
@@ -138,7 +139,10 @@ impl Lexer {
         self.eat_whitespaces();
 
         let tok = match self.ch {
-            '=' => Token::new(TokenType::ASSIGN, self.ch.to_string()),
+            //hm book uses strings in general here but maybe chars are better for performance, vec<chars> instead of string 
+            //maybe not, the vector of chars would definitely use more memory. One char uses four bytes and a element of a string is just 1 byte
+            //alternative: vec<u8> ???
+            '=' => Token::new(TokenType::ASSIGN, self.ch.to_string()), 
             ';' => Token::new(TokenType::SEMICOLON, self.ch.to_string()),
             '(' => Token::new(TokenType::LPAREN, self.ch.to_string()),
             ')' => Token::new(TokenType::RPAREN, self.ch.to_string()),
