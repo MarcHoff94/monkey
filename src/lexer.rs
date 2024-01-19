@@ -1,88 +1,14 @@
-#[derive(Debug)]
-pub struct Token{
-    tokentype: TokenType,
-    literal: String,
-}
-impl Token {
-    fn new(tok_type: TokenType, literal: String) -> Token {
-        Token {
-            tokentype: tok_type,
-            literal: literal,
-        }
-    }
-}
-#[derive(Debug)]
-pub enum TokenType {
-    ILLEGAL,
-    EOF,
-
-    //Identifiers + literals
-    IDENT,
-    INT,
-
-    //Operators
-    ASSIGN,
-    PLUS,
-    PLUSSELF,
-    MINUS,
-    MINUSSELF,
-    POWER,
-    BANG,
-    ASTERISK,
-    SLASH,
-
-    LT,
-    LTEQ,
-    GT,
-    GTEQ,
-
-    EQ,
-    NOTEQ,
-
-    //Delimiters
-
-    COMMA,
-    SEMICOLON,
-
-    LPAREN,
-    RPAREN,
-    LBRACE,
-    RBRACE,
-
-    //Keywords
-
-    FUNCTION,
-    LET,
-    TRUE,
-    FALSE,
-    IF,
-    ELSE,
-    RETURN,
-}
-impl TokenType {
-    fn lookup_keyword(keyword: &str) -> TokenType {
-        let result = match keyword {
-            "function" => TokenType::FUNCTION,
-            "let" => TokenType::LET,
-            "true" => TokenType::TRUE,
-            "false" => TokenType::FALSE,
-            "if" => TokenType::IF,
-            "else" => TokenType::ELSE,
-            "return" => TokenType::RETURN,
-            _ => TokenType::IDENT,
-        };
-        return result
-    }
-}
+use crate::token::Token;
+use crate::token::TokenType;
 #[derive(Debug)]
 pub struct Lexer {
-    input: String,
+    pub input: String,
     position: usize,
     read_position: usize,
-    ch: char,
+    pub ch: char,
 }
 impl Lexer {
-    fn new(input: String) -> Lexer {
+    pub fn new(input: String) -> Lexer {
         let mut l = Lexer {
             input: input,
             position: 0,
@@ -155,7 +81,7 @@ impl Lexer {
         }
     }
 
-    fn next_token(&mut self) -> Token {
+    pub fn next_token(&mut self) -> Token {
 
         self.eat_whitespaces();
 
