@@ -3,8 +3,8 @@ use crate::token::TokenType;
 #[derive(Debug)]
 pub struct Lexer {
     pub input: String,
-    position: usize,
-    read_position: usize,
+    pub position: usize,
+    pub read_position: usize,
     pub ch: char,
 }
 impl Lexer {
@@ -21,27 +21,28 @@ impl Lexer {
     }
 
     fn read_char(&mut self) {
-        if self.read_position >= self.input.len() {
-            self.ch = '0'
-        } else {
-            self.ch = self.input.chars().nth(self.read_position).unwrap_or('0');
+        if !self.reached_eof() {
+            match self.input.chars().nth(self.read_position) {
+                Some(ch) => self.ch = ch,
+                None => ()
+            }
         }
         
         self.position = self.read_position;
         self.read_position += 1;
     }
 
-    fn peek_char(&self) -> char {
-        if self.read_position >= self.input.len() {
-            '0'
+    fn peek_char(&self) -> Option<char> {
+        if self.reached_eof() {
+            None
         } else {
-            self.input.chars().nth(self.read_position).unwrap_or('0')
+            Some(self.input.chars().nth(self.read_position).unwrap())
         }
     }
 
     fn read_number(&mut self) -> String  {
         let start_pos: usize = self.position;
-        while is_digit(self.ch) {
+        while is_digit(self.ch) && !self.reached_eof() {
             self.read_char()
         }
         let result = match self.input.get(start_pos..self.position) {
@@ -53,7 +54,7 @@ impl Lexer {
 
     fn read_identifier(&mut self) -> String  {
         let start_pos: usize = self.position;
-        while is_letter(self.ch) {
+        while is_letter(self.ch) && !self.reached_eof() {
             self.read_char();
         }
         let result = match self.input.get(start_pos..self.position) {
@@ -65,7 +66,7 @@ impl Lexer {
 
     fn make_two_char_token(&mut self, one_char_tokentype: TokenType, two_char_tokentype: TokenType, second_char: char) -> Token {
 
-        if self.peek_char() == second_char {
+        if self.peek_char().unwrap_or(' ') == second_char {
             let mut literal = String::from(self.ch);
             self.read_char();
             literal.push(self.ch);
@@ -78,6 +79,14 @@ impl Lexer {
     fn eat_whitespaces(&mut self) {
         while self.ch == ' ' || self.ch == '\t' || self.ch == '\n' || self.ch == '\r' {
             self.read_char()
+        }
+    }
+
+    fn reached_eof(&self) -> bool {
+        if self.read_position > self.input.len() {
+            true
+        } else {
+            false
         }
     }
 
@@ -104,20 +113,24 @@ impl Lexer {
             '>' => self.make_two_char_token(TokenType::GT, TokenType::GTEQ, '='),
             '{' => Token::new(TokenType::LBRACE, self.ch.to_string()),
             '}' => Token::new(TokenType::RBRACE, self.ch.to_string()),
-            '0' => Token::new(TokenType::EOF, self.ch.to_string()),
             _ => {
-                if is_letter(self.ch) {
+                if is_letter(self.ch) && !self.reached_eof() {
                     let literal: String = self.read_identifier();
                     return Token::new(TokenType::lookup_keyword(&literal), literal)
                     
-                }else if is_digit(self.ch) {
+                } else if is_digit(self.ch) && !self.reached_eof() {
                     let literal: String = self.read_number();
                     return Token::new(TokenType::INT, literal)
+                } else if self.reached_eof() {
+                    return Token::new(TokenType::EOF, String::from("eof"))
                 } else {
-                    Token::new(TokenType::ILLEGAL, String::from("0"))
+                    Token::new(TokenType::ILLEGAL, self.ch.to_string())
                 }
             }
         };
+        if self.reached_eof() {
+            return Token::new(TokenType::EOF, self.ch.to_string())
+        }
         self.read_char();
         tok
     }

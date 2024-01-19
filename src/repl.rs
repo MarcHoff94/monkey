@@ -1,9 +1,19 @@
 use crate::token::TokenType;
 use crate::lexer::Lexer;
 use std::fs;
+use std::io;
 
 pub fn start_interactive() {
-    println!(">> ");
+
+    
+    loop {
+        println!(">> ");
+        let mut user_input = String::new();
+        io::stdin().read_line(&mut user_input).expect("Failed to read line");
+        user_input = user_input.trim().to_string();
+        let mut monkey_lexer = Lexer::new(user_input);
+        create_tokens(&mut monkey_lexer);
+    }
     
 }
 
@@ -20,12 +30,15 @@ pub fn start(mut args: impl Iterator<Item = String>) {
         Ok(l) => Lexer::new(l),
         Err(err) => panic!("Could not create lexer. Error: {}", err),
     };
+    create_tokens(&mut monkey_lexer);
+}
 
+fn create_tokens(monkey_lexer: &mut Lexer) {
     loop {
         let tok = monkey_lexer.next_token();
         match tok.tokentype {
-            TokenType::EOF => break,
+            TokenType::EOF => {println!("{:?}", tok); break;},
             _ => println!("{:?}", tok)
         }
-    } 
+    }
 }
