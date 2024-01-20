@@ -1,5 +1,6 @@
 use crate::token::Token;
 use crate::token::TokenType;
+
 #[derive(Debug)]
 pub struct Lexer {
     pub input: String,
@@ -122,23 +123,23 @@ impl Lexer {
                     let literal: String = self.read_number();
                     return Token::new(TokenType::INT, literal)
                 } else if self.reached_eof() {
-                    return Token::new(TokenType::EOF, String::from("eof"))
+                    return Token::new(TokenType::EOF, String::new())
                 } else {
                     Token::new(TokenType::ILLEGAL, self.ch.to_string())
                 }
             }
         };
         if self.reached_eof() {
-            return Token::new(TokenType::EOF, self.ch.to_string())
+            return Token::new(TokenType::EOF, String::new())
         }
         self.read_char();
         tok
     }
 }
-pub fn is_letter(byte: char) -> bool {
+fn is_letter(byte: char) -> bool {
     'a' <= byte && byte <= 'z' || 'A' <= byte && byte <= 'Z' || byte == '_'
 }
 
-pub fn is_digit(byte:char) -> bool {
+fn is_digit(byte:char) -> bool {
     '0' <= byte && byte <= '9'
 }

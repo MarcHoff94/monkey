@@ -1,3 +1,7 @@
+use crate::ast::Expression;
+use crate::ast::Statement;
+use crate::ast::Node;
+
 
 #[derive(Debug)]
 pub struct Token{
@@ -73,5 +77,59 @@ impl TokenType {
             _ => TokenType::IDENT,
         };
         return result
+    }
+}
+
+pub struct LetStatement {
+    token: Token,
+    name: Identifier,
+    value: MonkeyExperssion,
+
+}
+
+impl Node for LetStatement {
+    fn token_literal(&self) -> Option<&String> {
+        if &self.token.literal != "" {
+            Some(&self.token.literal)
+        } else {
+            None
+        }
+    }
+}
+impl Statement for LetStatement {
+    fn statement_node(&self) {
+
+    }
+}
+
+pub struct Identifier {
+    token: Token,
+    value: String, 
+}
+impl Node for Identifier {
+    fn token_literal(&self) -> Option<&String> {
+        if &self.token.literal != "" {
+            Some(&self.token.literal)
+        } else {
+            None
+        }
+    } 
+}
+impl Expression for Identifier {
+    fn expression_node(&self) {
+        
+    }
+}
+
+pub struct MonkeyExperssion {
+
+}
+impl Node for MonkeyExperssion {
+    fn token_literal(&self) -> Option<&String> {
+        None
+    }
+}
+impl  Expression for MonkeyExperssion {
+    fn expression_node(&self) {
     }
 }
