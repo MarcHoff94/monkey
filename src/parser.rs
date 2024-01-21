@@ -1,6 +1,6 @@
 use crate::lexer::Lexer;
-use crate::ast::{self, Programm};
-use crate::token::Token;
+use crate::ast::{Programm, Statement};
+use crate::token::{Token, TokenType, LetStatement, Identifier, MonkeyExpression};
 
 pub struct Parser<'a> {
     lexer: &'a mut Lexer,
@@ -18,13 +18,74 @@ impl Parser <'_> {
         }
 
     }
+    //alot of cloning going on here :/ -> needs to be fixed
+    pub fn parse_programm(&mut self) -> Result<Programm, &'static str> {
+        let mut programm = Programm {
+            statements: Vec::new()
+        };
+        let mut parsed_statement: Box<dyn Statement>;
+        loop {
+            match self.curr_token.tokentype {
+                TokenType::LET => {
+                    parsed_statement = match self.parse_let_statement() {
+                        Ok(x) => Box::new(x),
+                        Err(err) => panic!("{}",err),
+                    }
+                },
+                TokenType::EOF => break,
+                _ => continue,
+            }
+            programm.statements.push(parsed_statement);
+            let _ = &self.next_token();
+        }
+        if programm.statements.len() > 0 {
+            Ok(programm)
+        } else {
+            Err("failed to parse any statements")
+        }
+    }
 
-    pub fn next_token(mut self) {
-        self.curr_token = self.peek_token;
+    fn next_token(&mut self) {
+        self.curr_token = self.peek_token.clone();
         self.peek_token = self.lexer.next_token();
     }
 
-    pub fn parse_programm(&mut self) -> Result<Programm, &'static str> {
-        Err("not implemented yet")
+    fn parse_let_statement(&mut self) -> Result<LetStatement, &'static str> {
+        let statement_token = self.curr_token.clone();
+        let statement_name: Identifier;
+        match self.peek_token.tokentype {
+            TokenType::IDENT => {
+                self.next_token();
+                statement_name = Identifier{token: self.curr_token.clone(), value: self.curr_token.literal.clone()};
+            },
+            _ => return Err("the name of the variable contains illegal characters or keywords"),
+        }
+
+        match self.peek_token.tokentype {
+            TokenType::ASSIGN => {self.next_token();},
+            _ => return Err("for assigning values to a variable a \"=\" is required "),
+            
+        }
+        while self.curr_token.tokentype != TokenType::SEMICOLON {
+            self.next_token();
+        }
+
+        Ok(LetStatement::new(Token::new(statement_token.tokentype, statement_token.literal), statement_name, MonkeyExpression {}))
+    }
+
+    fn expect_peek(&mut self, tok_type: TokenType) -> bool {
+        if self.peektoken_is(tok_type) {
+            self.next_token();
+            return true
+        } else {
+            return false
+        }
+    }
+    fn peektoken_is(&self, tok_type: TokenType) -> bool {
+        return self.peek_token.tokentype == tok_type
+    }
+
+    fn currtoken_is(&self, tok_type: TokenType) -> bool {
+        return self.curr_token.tokentype == tok_type
     }
 }

@@ -1,3 +1,4 @@
+
 pub trait Node {
     fn token_literal(&self) -> Option<&String>;
 }
@@ -10,8 +11,9 @@ pub trait Expression: Node {
     fn expression_node(&self);
 }
 
+
 pub struct Programm {
-    statements: Vec<Box<dyn Statement>>,
+    pub statements: Vec<Box<dyn Statement>>,
 }
 impl Node for Programm {
     fn token_literal(&self) -> Option<&String> {

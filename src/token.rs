@@ -1,9 +1,11 @@
+use std::clone;
+
 use crate::ast::Expression;
 use crate::ast::Statement;
 use crate::ast::Node;
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token{
     pub tokentype: TokenType,
     pub literal: String,
@@ -16,7 +18,7 @@ impl Token {
         }
     }
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
     ILLEGAL,
     EOF,
@@ -83,10 +85,18 @@ impl TokenType {
 pub struct LetStatement {
     token: Token,
     name: Identifier,
-    value: MonkeyExperssion,
+    value: MonkeyExpression,
 
 }
-
+impl LetStatement {
+    pub fn new(tok: Token, name: Identifier, value: MonkeyExpression) -> LetStatement {
+        LetStatement{
+            token: tok,
+            name: name, 
+            value: value,
+        }
+    }
+}
 impl Node for LetStatement {
     fn token_literal(&self) -> Option<&String> {
         if &self.token.literal != "" {
@@ -101,10 +111,10 @@ impl Statement for LetStatement {
 
     }
 }
-
+#[derive(Debug)]
 pub struct Identifier {
-    token: Token,
-    value: String, 
+    pub token: Token,
+    pub value: String, 
 }
 impl Node for Identifier {
     fn token_literal(&self) -> Option<&String> {
@@ -117,19 +127,19 @@ impl Node for Identifier {
 }
 impl Expression for Identifier {
     fn expression_node(&self) {
-        
+        println!("{:?}", self)
     }
 }
 
-pub struct MonkeyExperssion {
+pub struct MonkeyExpression {
 
 }
-impl Node for MonkeyExperssion {
+impl Node for MonkeyExpression {
     fn token_literal(&self) -> Option<&String> {
         None
     }
 }
-impl  Expression for MonkeyExperssion {
+impl  Expression for MonkeyExpression {
     fn expression_node(&self) {
     }
 }
