@@ -1,5 +1,3 @@
-use std::clone;
-
 use crate::ast::Expression;
 use crate::ast::Statement;
 use crate::ast::Node;

@@ -25,6 +25,7 @@ impl Parser <'_> {
         };
         let mut parsed_statement: Box<dyn Statement>;
         loop {
+            
             match self.curr_token.tokentype {
                 TokenType::LET => {
                     parsed_statement = match self.parse_let_statement() {
@@ -33,8 +34,9 @@ impl Parser <'_> {
                     }
                 },
                 TokenType::EOF => break,
-                _ => continue,
+                _ => {let _ = &self.next_token(); continue},
             }
+            
             programm.statements.push(parsed_statement);
             let _ = &self.next_token();
         }
