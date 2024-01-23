@@ -75,6 +75,9 @@ impl Parser <'_> {
             _ => return Err("for assigning values to a variable a \"=\" is required "),
             
         }
+
+        //expression parsing still missing
+        
         while self.curr_token.tokentype != TokenType::SEMICOLON {
             self.next_token();
         }
