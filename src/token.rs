@@ -1,5 +1,5 @@
+
 use crate::ast::Expression;
-use crate::ast::Statement;
 use crate::ast::Node;
 
 
@@ -79,7 +79,7 @@ impl TokenType {
         return result
     }
 }
-
+#[derive(Debug)]
 pub struct LetStatement {
     token: Token,
     name: Identifier,
@@ -104,11 +104,50 @@ impl Node for LetStatement {
         }
     }
 }
-impl Statement for LetStatement {
-    fn statement_node(&self) {
 
+#[derive(Debug)]
+pub struct ReturnStatement {
+    token: Token,
+    return_value: MonkeyExpression,
+}
+impl ReturnStatement {
+    pub fn new(tok: Token, expression: MonkeyExpression) -> ReturnStatement {
+        ReturnStatement { token: tok, return_value: expression }
     }
 }
+
+impl Node for ReturnStatement {
+    fn token_literal(&self) -> Option<&String> {
+        if &self.token.literal != "" {
+            Some(&self.token.literal)
+        } else {
+            None   
+        }
+    }
+}
+
+
+#[derive(Debug)]
+pub struct ExpressionStatement {
+    token: Token,
+    expression: MonkeyExpression
+}
+
+impl ExpressionStatement {
+    fn new(tok:Token, expression: MonkeyExpression) -> ExpressionStatement {
+        ExpressionStatement { token: tok, expression: expression }
+    }
+}
+impl Node for ExpressionStatement {
+    fn token_literal(&self) -> Option<&String> {
+        if &self.token.literal != "" {
+            Some(&self.token.literal)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Identifier {
     pub token: Token,
@@ -129,8 +168,8 @@ impl Expression for Identifier {
     }
 }
 
+#[derive(Debug)]
 pub struct MonkeyExpression {
-
 }
 impl Node for MonkeyExpression {
     fn token_literal(&self) -> Option<&String> {

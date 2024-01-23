@@ -1,6 +1,6 @@
 use crate::lexer::Lexer;
 use crate::ast::{Programm, Statement};
-use crate::token::{Token, TokenType, LetStatement, Identifier, MonkeyExpression};
+use crate::token::{Token, TokenType, LetStatement, Identifier, MonkeyExpression, ReturnStatement};
 
 pub struct Parser<'a> {
     lexer: &'a mut Lexer,
@@ -23,20 +23,27 @@ impl Parser <'_> {
         let mut programm = Programm {
             statements: Vec::new()
         };
-        let mut parsed_statement: Box<dyn Statement>;
+        let mut parsed_statement: Statement;
         loop {
             
             match self.curr_token.tokentype {
                 TokenType::LET => {
                     parsed_statement = match self.parse_let_statement() {
-                        Ok(x) => Box::new(x),
+                        Ok(x) => x,
                         Err(err) => panic!("{}",err),
-                    }
+                    };
                 },
+                TokenType::RETURN => {
+                    parsed_statement = match self.parse_return_statement() {
+                        Ok(x) => x,
+                        Err(err) => panic!("{}", err),
+                    }
+                }
                 TokenType::EOF => break,
                 _ => {let _ = &self.next_token(); continue},
             }
-            
+
+            println!("{:#?}", parsed_statement);
             programm.statements.push(parsed_statement);
             let _ = &self.next_token();
         }
@@ -52,7 +59,7 @@ impl Parser <'_> {
         self.peek_token = self.lexer.next_token();
     }
 
-    fn parse_let_statement(&mut self) -> Result<LetStatement, &'static str> {
+    fn parse_let_statement(&mut self) -> Result<Statement, &'static str> {
         let statement_token = self.curr_token.clone();
         let statement_name: Identifier;
         match self.peek_token.tokentype {
@@ -72,7 +79,16 @@ impl Parser <'_> {
             self.next_token();
         }
 
-        Ok(LetStatement::new(Token::new(statement_token.tokentype, statement_token.literal), statement_name, MonkeyExpression {}))
+        Ok(Statement::LET(LetStatement::new(Token::new(statement_token.tokentype, statement_token.literal), statement_name, MonkeyExpression {})))
+    }
+
+    fn parse_return_statement(&mut self) -> Result<Statement, &'static str> {
+        let statement_token = self.curr_token.clone();
+        //expression parsing is still missing 
+        while self.curr_token.tokentype != TokenType::SEMICOLON {
+            self.next_token();
+        }
+        Ok(Statement::RETURN(ReturnStatement::new(statement_token, MonkeyExpression {  })))
     }
 
     fn expect_peek(&mut self, tok_type: TokenType) -> bool {
