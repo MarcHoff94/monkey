@@ -1,4 +1,5 @@
 let x = 0;
+foobar;
 if x != 5 {
     return myvariable = 3;
 }

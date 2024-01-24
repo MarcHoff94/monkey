@@ -16,7 +16,7 @@ impl Token {
         }
     }
 }
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
 pub enum TokenType {
     ILLEGAL,
     EOF,
@@ -134,7 +134,7 @@ pub struct ExpressionStatement {
 }
 
 impl ExpressionStatement {
-    fn new(tok:Token, expression: MonkeyExpression) -> ExpressionStatement {
+    pub fn new(tok:Token, expression: MonkeyExpression) -> ExpressionStatement {
         ExpressionStatement { token: tok, expression: expression }
     }
 }
@@ -170,6 +170,8 @@ impl Expression for Identifier {
 
 #[derive(Debug)]
 pub struct MonkeyExpression {
+    pub token: Token,
+    pub value: String,
 }
 impl Node for MonkeyExpression {
     fn token_literal(&self) -> Option<&String> {
