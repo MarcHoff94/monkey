@@ -10,10 +10,7 @@ pub struct Token{
 }
 impl Token {
     pub fn new(tok_type: TokenType, literal: String) -> Token {
-        Token {
-            tokentype: tok_type,
-            literal: literal,
-        }
+        Token {tokentype: tok_type, literal: literal}
     }
 }
 #[derive(Debug, PartialEq, Clone, Eq, Hash)]
@@ -88,11 +85,7 @@ pub struct LetStatement {
 }
 impl LetStatement {
     pub fn new(tok: Token, name: Identifier, value: MonkeyExpression) -> LetStatement {
-        LetStatement{
-            token: tok,
-            name: name, 
-            value: value,
-        }
+        LetStatement{token: tok, name: name, value: value}
     }
 }
 impl Node for LetStatement {
@@ -111,8 +104,8 @@ pub struct ReturnStatement {
     return_value: MonkeyExpression,
 }
 impl ReturnStatement {
-    pub fn new(tok: Token, expression: MonkeyExpression) -> ReturnStatement {
-        ReturnStatement { token: tok, return_value: expression }
+    pub fn new(tok: Token, expr: MonkeyExpression) -> ReturnStatement {
+        ReturnStatement {token: tok, return_value: expr}
     }
 }
 
@@ -134,8 +127,8 @@ pub struct ExpressionStatement {
 }
 
 impl ExpressionStatement {
-    pub fn new(tok:Token, expression: MonkeyExpression) -> ExpressionStatement {
-        ExpressionStatement { token: tok, expression: expression }
+    pub fn new(tok:Token, expr: MonkeyExpression) -> ExpressionStatement {
+        ExpressionStatement { token: tok, expression: expr }
     }
 }
 impl Node for ExpressionStatement {
@@ -152,6 +145,11 @@ impl Node for ExpressionStatement {
 pub struct Identifier {
     pub token: Token,
     pub value: String, 
+}
+impl Identifier {
+    pub fn new(tok: Token, val: String) -> Identifier {
+        Identifier { token: tok, value: val }
+    }
 }
 impl Node for Identifier {
     fn token_literal(&self) -> Option<&String> {
@@ -173,9 +171,18 @@ pub struct MonkeyExpression {
     pub token: Token,
     pub value: String,
 }
+impl MonkeyExpression {
+    pub fn new(tok: Token, val: String) -> MonkeyExpression {
+        MonkeyExpression { token: tok, value: val }
+    }
+}
 impl Node for MonkeyExpression {
     fn token_literal(&self) -> Option<&String> {
-        None
+        if &self.token.literal != "" {
+            Some(&self.token.literal)
+        } else {
+            None
+        }
     }
 }
 impl  Expression for MonkeyExpression {

@@ -9,7 +9,7 @@ pub struct Parser<'a> {
     curr_token: Token,
     peek_token: Token,
     prefix_parse_fns: HashMap<TokenType, fn(&mut Parser<'a>) -> Result<MonkeyExpression, &'static str>>,
-    infix_parse_fns: HashMap<TokenType, fn(expression: MonkeyExpression) -> Result<MonkeyExpression, &'static str>>
+    infix_parse_fns: HashMap<TokenType, fn(&mut Parser<'a>, expression: MonkeyExpression) -> Result<MonkeyExpression, &'static str>>
 }
 impl<'a> Parser <'a> {
     pub fn new(lexer: &'a mut Lexer) -> Parser<'a> {
@@ -29,7 +29,7 @@ impl<'a> Parser <'a> {
         self.prefix_parse_fns.insert(tok_type, parse_func);
     }
 
-    fn register_infix_fn(&mut self, tok_type: TokenType, parse_func: fn(expr: MonkeyExpression) -> Result<MonkeyExpression, &'static str>) {
+    fn register_infix_fn(&mut self, tok_type: TokenType, parse_func: fn(&mut Parser<'a>, expr: MonkeyExpression) -> Result<MonkeyExpression, &'static str>) {
         self.infix_parse_fns.insert(tok_type, parse_func);
     }
     //alot of cloning going on here :/ -> needs to be fixed
@@ -84,7 +84,7 @@ impl<'a> Parser <'a> {
         match self.peek_token.tokentype {
             TokenType::IDENT => {
                 self.next_token();
-                statement_name = Identifier{token: self.curr_token.clone(), value: self.curr_token.literal.clone()};
+                statement_name = Identifier::new(self.curr_token.clone(), self.curr_token.literal.clone());
             },
             _ => return Err("the name of the variable contains illegal characters or keywords"),
         }
@@ -102,8 +102,9 @@ impl<'a> Parser <'a> {
         }
 
         Ok(Statement::LET(LetStatement::new(
-            Token::new(statement_token.tokentype.clone(), statement_token.literal.clone()), statement_name, 
-            MonkeyExpression { token: statement_token.clone(), value: statement_token.literal})))
+            Token::new(statement_token.tokentype.clone(), statement_token.literal.clone()), 
+            statement_name, 
+            MonkeyExpression::new(statement_token.clone(), statement_token.literal.clone()))))
     }
 
     fn parse_return_statement(&mut self) -> Result<Statement, &'static str> {
@@ -112,7 +113,13 @@ impl<'a> Parser <'a> {
         while self.curr_token.tokentype != TokenType::SEMICOLON {
             self.next_token();
         }
-        Ok(Statement::RETURN(ReturnStatement::new(statement_token, MonkeyExpression { token: self.curr_token.clone(), value: self.curr_token.literal.clone() })))
+        Ok(Statement::RETURN(
+            ReturnStatement::new(
+                statement_token,
+                 MonkeyExpression::new(self.curr_token.clone(), self.curr_token.literal.clone())
+                )
+            )
+        )
     }
 
     fn parse_expression_statement(&mut self) -> Result<Statement, &'static str> {
@@ -134,7 +141,7 @@ impl<'a> Parser <'a> {
     }
 
     pub fn parse_identifier(&mut self) -> Result<MonkeyExpression, &'static str> {
-        Ok(MonkeyExpression { token: self.curr_token.clone(), value: self.curr_token.literal.clone() })
+        Ok(MonkeyExpression::new(self.curr_token.clone(), self.curr_token.literal.clone()))
     }
 
     fn expect_peek(&mut self, tok_type: TokenType) -> bool {
