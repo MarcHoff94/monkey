@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use crate::lexer::Lexer;
-use crate::ast::{Programm, Statement};
-use crate::token::{Token, TokenType, LetStatement, Identifier, MonkeyExpression, ReturnStatement, ExpressionStatement};
+use crate::ast::{Programm, Statement, MonkeyExpression};
+use crate::token::{ExpressionStatement, Identifier, IntegerLiteral, LetStatement, ReturnStatement, Token, TokenType};
 
 pub struct Parser<'a> {
     lexer: &'a mut Lexer,
@@ -23,6 +23,7 @@ impl<'a> Parser <'a> {
             infix_parse_fns: HashMap::new(),
         };
         p.register_prefix_fn(TokenType::IDENT, Parser::parse_identifier);
+        p.register_prefix_fn(TokenType::INT, Parser::parse_IntegerLiteral);
         p
     }
     fn register_prefix_fn(&mut self, tok_type: TokenType, parse_func: fn(&mut Parser<'a>) -> Result<MonkeyExpression, &'static str>) {
@@ -90,42 +91,48 @@ impl<'a> Parser <'a> {
         }
 
         match self.peek_token.tokentype {
-            TokenType::ASSIGN => {self.next_token();},
+            TokenType::ASSIGN => {self.next_token(); self.next_token();},
             _ => return Err("for assigning values to a variable a \"=\" is required "),
             
         }
-
-        //expression parsing still missing
+        let value = match self.curr_token.tokentype {
+            TokenType::INT => self.parse_IntegerLiteral(),
+            _ => Ok(MonkeyExpression::INTEGERLITERAL(IntegerLiteral::new(self.curr_token.clone(), 0)))
+        };
+        self.next_token();
         
         while self.curr_token.tokentype != TokenType::SEMICOLON {
             self.next_token();
         }
 
-        Ok(Statement::LET(LetStatement::new(
-            Token::new(statement_token.tokentype.clone(), statement_token.literal.clone()), 
-            statement_name, 
-            MonkeyExpression::new(statement_token.clone(), statement_token.literal.clone()))))
-    }
-
-    fn parse_return_statement(&mut self) -> Result<Statement, &'static str> {
-        let statement_token = self.curr_token.clone();
-        //expression parsing is still missing 
-        while self.curr_token.tokentype != TokenType::SEMICOLON {
-            self.next_token();
-        }
-        Ok(Statement::RETURN(
-            ReturnStatement::new(
-                statement_token,
-                 MonkeyExpression::new(self.curr_token.clone(), self.curr_token.literal.clone())
-                )
+        Ok(Statement::LET(
+            LetStatement::new(
+                Token::new(statement_token.tokentype, statement_token.literal), 
+                statement_name,
+                value.unwrap())
             )
         )
     }
 
+    fn parse_return_statement(&mut self) -> Result<Statement, &'static str> {
+        let statement_token = self.curr_token.clone();
+        self.next_token();
+        let expression = match self.parse_expression(Precedence::LOWEST) {
+            Ok(x) =>x,
+            Err(err) => panic!("was not able to parse expression of return statement. Token: {:?}, Error: {}", self.curr_token, err),
+        };
+        //expression parsing is still missing 
+        while self.curr_token.tokentype != TokenType::SEMICOLON {
+            self.next_token();
+        }
+        return Ok(Statement::RETURN(ReturnStatement::new(statement_token, expression)))
+    }
+
     fn parse_expression_statement(&mut self) -> Result<Statement, &'static str> {
+        println!("{:#?}", self.curr_token);
         let expression = match self.parse_expression(Precedence::LOWEST) {
             Ok(x) => x,
-            Err(err) => panic!("was not able to parse expression of statement. Token: {:?}, Error: {}", self.curr_token, err),
+            Err(err) => panic!("was not able to parse expression of expression statement. Token: {:?}, Error: {}", self.curr_token, err),
         };
         if self.peektoken_is(TokenType::SEMICOLON) {
             self.next_token();
@@ -136,12 +143,29 @@ impl<'a> Parser <'a> {
     fn parse_expression(&mut self, precedence: Precedence) -> Result<MonkeyExpression, &'static str> {
         match self.curr_token.tokentype {
             TokenType::IDENT => self.parse_identifier(),
+            TokenType::INT => self.parse_IntegerLiteral(),
             _ => Err("mep")
         }
     }
 
-    pub fn parse_identifier(&mut self) -> Result<MonkeyExpression, &'static str> {
-        Ok(MonkeyExpression::new(self.curr_token.clone(), self.curr_token.literal.clone()))
+    fn parse_identifier(&mut self) -> Result<MonkeyExpression, &'static str> {
+        Ok(
+            MonkeyExpression::IDENT(
+                Identifier::new(self.curr_token.clone(), self.curr_token.literal.clone())
+            )
+        )
+    }
+
+    fn parse_IntegerLiteral(&mut self) -> Result<MonkeyExpression, &'static str> {
+        let int_val = match self.curr_token.literal.parse::<i64>() {
+            Ok(x) => x,
+            Err(err) => panic!("Parse Error! could not parse integer value: {}", err),
+        };
+        Ok(
+            MonkeyExpression::INTEGERLITERAL(
+                IntegerLiteral::new(self.curr_token.clone(), int_val)
+            )
+        )
     }
 
     fn expect_peek(&mut self, tok_type: TokenType) -> bool {

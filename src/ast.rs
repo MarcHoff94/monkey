@@ -1,17 +1,38 @@
-use crate::token::{LetStatement, ReturnStatement, ExpressionStatement};
+use crate::token::{ExpressionStatement, Identifier, IntegerLiteral, LetStatement, ReturnStatement};
 
 
 pub trait Node {
     fn token_literal(&self) -> Option<&String>;
 }
-
-// pub trait Statement: Node {
-//     fn statement_node(&self);
-    
-// }
-
-pub trait Expression: Node {
+pub trait Expression {
     fn expression_node(&self);
+}
+
+#[derive(Debug)]
+pub enum MonkeyExpression {
+    IDENT(Identifier),
+    INTEGERLITERAL(IntegerLiteral)
+}
+impl MonkeyExpression {
+    pub fn into_expr(self) -> Box<dyn Expression> {
+        match self {
+            Self::IDENT(x) => Box::new(x),
+            Self::INTEGERLITERAL(x) => Box::new(x),
+        }
+    }
+}
+impl Node for MonkeyExpression {
+    fn token_literal(&self) -> Option<&String> {
+        match &self {
+            Self::IDENT(expr) => expr.token_literal(),
+            Self::INTEGERLITERAL(expr) =>expr.token_literal(),
+        }
+    }
+}
+impl Expression for MonkeyExpression {
+    fn expression_node(&self) {
+        
+    }
 }
 #[derive(Debug)]
 pub enum Statement {

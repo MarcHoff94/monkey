@@ -1,5 +1,6 @@
 
 use crate::ast::Expression;
+use crate::ast::MonkeyExpression;
 use crate::ast::Node;
 
 
@@ -140,6 +141,11 @@ impl Node for ExpressionStatement {
         }
     }
 }
+impl Expression for ExpressionStatement {
+    fn expression_node(&self) {
+        
+    }
+}
 
 #[derive(Debug)]
 pub struct Identifier {
@@ -162,21 +168,21 @@ impl Node for Identifier {
 }
 impl Expression for Identifier {
     fn expression_node(&self) {
-        println!("{:?}", self)
+        
     }
 }
 
 #[derive(Debug)]
-pub struct MonkeyExpression {
+pub struct IntegerLiteral {
     pub token: Token,
-    pub value: String,
+    pub value: i64,
 }
-impl MonkeyExpression {
-    pub fn new(tok: Token, val: String) -> MonkeyExpression {
-        MonkeyExpression { token: tok, value: val }
+impl IntegerLiteral {
+    pub fn new(tok: Token, val: i64) -> IntegerLiteral {
+        IntegerLiteral { token: tok, value: val }
     }
 }
-impl Node for MonkeyExpression {
+impl Node for IntegerLiteral {
     fn token_literal(&self) -> Option<&String> {
         if &self.token.literal != "" {
             Some(&self.token.literal)
@@ -185,7 +191,9 @@ impl Node for MonkeyExpression {
         }
     }
 }
-impl  Expression for MonkeyExpression {
+impl Expression for IntegerLiteral {
     fn expression_node(&self) {
+        
     }
 }
+

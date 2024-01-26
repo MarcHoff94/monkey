@@ -1,5 +1,3 @@
-let x = 0;
+let x = 1;
 foobar;
-if x != 5 {
-    return myvariable = 3;
-}
+return 8;
