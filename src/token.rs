@@ -1,5 +1,5 @@
-
 use crate::ast::Expression;
+use crate::ast::MonkeyExpr;
 use crate::ast::MonkeyExpression;
 use crate::ast::Node;
 
@@ -132,6 +132,8 @@ impl ExpressionStatement {
         ExpressionStatement { token: tok, expression: expr }
     }
 }
+impl MonkeyExpr for ExpressionStatement {}
+
 impl Node for ExpressionStatement {
     fn token_literal(&self) -> Option<&String> {
         if &self.token.literal != "" {
@@ -157,6 +159,8 @@ impl Identifier {
         Identifier { token: tok, value: val }
     }
 }
+impl MonkeyExpr for Identifier {}
+
 impl Node for Identifier {
     fn token_literal(&self) -> Option<&String> {
         if &self.token.literal != "" {
@@ -182,6 +186,8 @@ impl IntegerLiteral {
         IntegerLiteral { token: tok, value: val }
     }
 }
+impl MonkeyExpr for IntegerLiteral {}
+
 impl Node for IntegerLiteral {
     fn token_literal(&self) -> Option<&String> {
         if &self.token.literal != "" {
@@ -192,6 +198,34 @@ impl Node for IntegerLiteral {
     }
 }
 impl Expression for IntegerLiteral {
+    fn expression_node(&self) {
+        
+    }
+}
+
+#[derive(Debug)]
+pub struct PrefixExpression {
+    pub token: Token,
+    pub operator: String,
+    pub right: Box<dyn MonkeyExpr>,
+}
+impl PrefixExpression {
+    pub fn new(tok: Token, op: String, right: MonkeyExpression) -> PrefixExpression {
+        PrefixExpression { token: tok, operator: op, right: Box::new(right) }
+    }
+}
+impl MonkeyExpr for PrefixExpression {}
+
+impl Node for PrefixExpression {
+    fn token_literal(&self) -> Option<&String> {
+        if &self.token.literal != "" {
+            Some(&self.token.literal)
+        } else {
+            None
+        }
+    }
+}
+impl Expression for PrefixExpression {
     fn expression_node(&self) {
         
     }

@@ -1,9 +1,11 @@
-use crate::token::{ExpressionStatement, Identifier, IntegerLiteral, LetStatement, ReturnStatement};
+use crate::token::{ExpressionStatement, Identifier, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement};
+use std::fmt::Debug;
 
-
+pub trait MonkeyExpr: Expression + Node + Debug {}
 pub trait Node {
     fn token_literal(&self) -> Option<&String>;
 }
+
 pub trait Expression {
     fn expression_node(&self);
 }
@@ -11,13 +13,15 @@ pub trait Expression {
 #[derive(Debug)]
 pub enum MonkeyExpression {
     IDENT(Identifier),
-    INTEGERLITERAL(IntegerLiteral)
+    INTEGERLITERAL(IntegerLiteral),
+    PREFIX(PrefixExpression),
 }
 impl MonkeyExpression {
     pub fn into_expr(self) -> Box<dyn Expression> {
         match self {
             Self::IDENT(x) => Box::new(x),
             Self::INTEGERLITERAL(x) => Box::new(x),
+            Self::PREFIX(x) => Box::new(x),
         }
     }
 }
@@ -26,6 +30,7 @@ impl Node for MonkeyExpression {
         match &self {
             Self::IDENT(expr) => expr.token_literal(),
             Self::INTEGERLITERAL(expr) =>expr.token_literal(),
+            Self::PREFIX(expr) => expr.token_literal()
         }
     }
 }
@@ -34,6 +39,8 @@ impl Expression for MonkeyExpression {
         
     }
 }
+impl MonkeyExpr for MonkeyExpression {}
+
 #[derive(Debug)]
 pub enum Statement {
     LET(LetStatement),
