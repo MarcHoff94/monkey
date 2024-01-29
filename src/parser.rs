@@ -155,31 +155,19 @@ impl<'a> Parser <'a> {
 
     fn parse_expression(&mut self, precedence: Precedence) -> Result<MonkeyExpression, &'static str> {
         let mut left_expr: Result<MonkeyExpression, &'static str>;
-        let prefix_tok = self.curr_token.clone();
         
-        let prefix = match self.prefix_parse_fns.get(&prefix_tok.tokentype) {
-            Some(func) => func,
-            None => panic!("couldnt find prefix parsing function. Token: {:?}", prefix_tok),
-        };
+        //eeh sketchy, im not checking if curr_token.tokentype is a key in hashmap
+        let prefix = self.prefix_parse_fns[&self.curr_token.tokentype];
 
         left_expr = prefix(self);
-        println!("{:#?}", left_expr);
+
         while self.peek_token.tokentype != TokenType::SEMICOLON && precedence.into_i32() < self.get_precedence(true).into_i32() {
-            let infix = match self.infix_parse_fns.get(&self.peek_token.tokentype) {
-                Some(func) => func,
-                None => panic!("couldnt find infix parsing function. Token: {:?}", self.curr_token),
-            };
+            let infix = self.infix_parse_fns[&self.peek_token.tokentype];
             self.next_token();
             left_expr = infix(self, left_expr.unwrap());
-            println!("{:#?}", left_expr);
         }
         left_expr
-        // match self.curr_token.tokentype {
-        //     TokenType::IDENT => self.parse_identifier(),
-        //     TokenType::INT => self.parse_integer_literal(),
-        //     TokenType::BANG | TokenType::MINUS => self.parse_prefix_expression(),
-        //     _ => Err("mep")
-        // }
+    
     }
 
     fn parse_identifier(&mut self) -> Result<MonkeyExpression, &'static str> {
