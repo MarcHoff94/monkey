@@ -231,3 +231,33 @@ impl Expression for PrefixExpression {
     }
 }
 
+#[derive(Debug)]
+pub struct InfixExpression {
+    pub token: Token,
+    pub operator: String,
+    pub left: Box<dyn MonkeyExpr>,
+    pub right: Box<dyn MonkeyExpr>,
+}
+
+impl InfixExpression {
+    pub fn new(operator: String, tok: Token, left: Box<dyn MonkeyExpr>, right: Box<dyn MonkeyExpr>) -> InfixExpression {
+        InfixExpression { operator: operator, token: tok,  left: left, right: right }
+    }
+}
+
+impl MonkeyExpr for InfixExpression {}
+
+impl Node for InfixExpression {
+    fn token_literal(&self) -> Option<&String> {
+        if &self.token.literal != "" {
+            Some(&self.token.literal)
+        } else {
+            None
+        }
+    }
+}
+impl Expression for InfixExpression {
+    fn expression_node(&self) {
+        
+    }
+}

@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
 use crate::lexer::Lexer;
-use crate::ast::{Programm, Statement, MonkeyExpression};
-use crate::token::{ExpressionStatement, Identifier, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Token, TokenType};
+use crate::ast::{Programm, Statement, MonkeyExpression, MonkeyExpr};
+use crate::token::{ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Token, TokenType};
 
 pub struct Parser<'a> {
     lexer: &'a mut Lexer,
     curr_token: Token,
     peek_token: Token,
     prefix_parse_fns: HashMap<TokenType, fn(&mut Parser<'a>) -> Result<MonkeyExpression, &'static str>>,
-    infix_parse_fns: HashMap<TokenType, fn(&mut Parser<'a>, expression: MonkeyExpression) -> Result<MonkeyExpression, &'static str>>
+    infix_parse_fns: HashMap<TokenType, fn(&mut Parser<'a>, left : MonkeyExpression) -> Result<MonkeyExpression, &'static str>>
 }
 impl<'a> Parser <'a> {
     pub fn new(lexer: &'a mut Lexer) -> Parser<'a> {
@@ -26,6 +26,16 @@ impl<'a> Parser <'a> {
         p.register_prefix_fn(TokenType::INT, Parser::parse_integer_literal);
         p.register_prefix_fn(TokenType::BANG, Parser::parse_prefix_expression);
         p.register_prefix_fn(TokenType::MINUS, Parser::parse_prefix_expression);
+
+        p.register_infix_fn(TokenType::EQ, Parser::parse_infix_expression);
+        p.register_infix_fn(TokenType::NOTEQ, Parser::parse_infix_expression);
+        p.register_infix_fn(TokenType::LT, Parser::parse_infix_expression);
+        p.register_infix_fn(TokenType::GT, Parser::parse_infix_expression);
+        p.register_infix_fn(TokenType::PLUS, Parser::parse_infix_expression);
+        p.register_infix_fn(TokenType::MINUS, Parser::parse_infix_expression);
+        p.register_infix_fn(TokenType::ASTERISK, Parser::parse_infix_expression);
+        p.register_infix_fn(TokenType::SLASH, Parser::parse_infix_expression);
+
         p
     }
     fn register_prefix_fn(&mut self, tok_type: TokenType, parse_func: fn(&mut Parser<'a>) -> Result<MonkeyExpression, &'static str>) {
@@ -144,12 +154,32 @@ impl<'a> Parser <'a> {
     }
 
     fn parse_expression(&mut self, precedence: Precedence) -> Result<MonkeyExpression, &'static str> {
-        match self.curr_token.tokentype {
-            TokenType::IDENT => self.parse_identifier(),
-            TokenType::INT => self.parse_integer_literal(),
-            TokenType::BANG | TokenType::MINUS => self.parse_prefix_expression(),
-            _ => Err("mep")
+        let mut left_expr: Result<MonkeyExpression, &'static str>;
+        let prefix_tok = self.curr_token.clone();
+        
+        let prefix = match self.prefix_parse_fns.get(&prefix_tok.tokentype) {
+            Some(func) => func,
+            None => panic!("couldnt find prefix parsing function. Token: {:?}", prefix_tok),
+        };
+
+        left_expr = prefix(self);
+        println!("{:#?}", left_expr);
+        while self.peek_token.tokentype != TokenType::SEMICOLON && precedence.into_i32() < self.get_precedence(true).into_i32() {
+            let infix = match self.infix_parse_fns.get(&self.peek_token.tokentype) {
+                Some(func) => func,
+                None => panic!("couldnt find infix parsing function. Token: {:?}", self.curr_token),
+            };
+            self.next_token();
+            left_expr = infix(self, left_expr.unwrap());
+            println!("{:#?}", left_expr);
         }
+        left_expr
+        // match self.curr_token.tokentype {
+        //     TokenType::IDENT => self.parse_identifier(),
+        //     TokenType::INT => self.parse_integer_literal(),
+        //     TokenType::BANG | TokenType::MINUS => self.parse_prefix_expression(),
+        //     _ => Err("mep")
+        // }
     }
 
     fn parse_identifier(&mut self) -> Result<MonkeyExpression, &'static str> {
@@ -179,6 +209,31 @@ impl<'a> Parser <'a> {
         let right = self.parse_expression(Precedence::PREFIX).unwrap();
         Ok(MonkeyExpression::PREFIX(PrefixExpression::new(tok, op, right)))
 
+    }
+
+    fn parse_infix_expression(&mut self, left: MonkeyExpression) -> Result<MonkeyExpression, &'static str> {
+        let token = self.curr_token.clone();
+        let precedence = self.get_precedence(false);
+        self.next_token();
+        Ok(MonkeyExpression::INFIX(
+            InfixExpression::new(
+                token.literal.clone(),
+                token,
+                left.into_expr(),
+                self.parse_expression(precedence).unwrap().into_expr()
+            )   
+        ))
+    }
+
+    fn get_precedence(&self, peek: bool) -> Precedence {
+        let token = if peek {&self.peek_token} else {&self.curr_token};
+        match token.tokentype {
+            TokenType::EQ | TokenType::NOTEQ => Precedence::EQUAL,
+            TokenType::GT | TokenType::LT => Precedence::LESSGREATER,
+            TokenType::PLUS | TokenType::MINUS => Precedence::SUM,
+            TokenType::ASTERISK | TokenType::SLASH => Precedence::PRODUCT,
+            _ => Precedence::LOWEST
+        }
     }
 
     fn expect_peek(&mut self, tok_type: TokenType) -> bool {
