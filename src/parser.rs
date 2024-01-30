@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::lexer::Lexer;
 use crate::ast::{Programm, Statement, MonkeyExpression, MonkeyExpr};
-use crate::token::{ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Token, TokenType};
+use crate::token::{Boolean, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Token, TokenType};
 
 pub struct Parser<'a> {
     lexer: &'a mut Lexer,
@@ -26,6 +26,8 @@ impl<'a> Parser <'a> {
         p.register_prefix_fn(TokenType::INT, Parser::parse_integer_literal);
         p.register_prefix_fn(TokenType::BANG, Parser::parse_prefix_expression);
         p.register_prefix_fn(TokenType::MINUS, Parser::parse_prefix_expression);
+        p.register_prefix_fn(TokenType::FALSE, Parser::parse_boolean);
+        p.register_prefix_fn(TokenType::TRUE, Parser::parse_boolean);
 
         p.register_infix_fn(TokenType::EQ, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::NOTEQ, Parser::parse_infix_expression);
@@ -107,12 +109,8 @@ impl<'a> Parser <'a> {
             _ => return Err("for assigning values to a variable a \"=\" is required "),
             
         }
-        let value = self.parse_expression(Precedence::LOWEST);
-        // let value = match self.curr_token.tokentype {
-        //     TokenType::INT => self.parse_integer_literal(),
-        //     TokenType::MINUS => self.parse_prefix_expression(),
-        //     _ => Ok(MonkeyExpression::INTEGERLITERAL(IntegerLiteral::new(self.curr_token.clone(), 0)))
-        // };
+        let value = self.parse_expression(Precedence::LOWEST.into_i32());
+
         self.next_token();
         
         while self.curr_token.tokentype != TokenType::SEMICOLON {
@@ -131,7 +129,7 @@ impl<'a> Parser <'a> {
     fn parse_return_statement(&mut self) -> Result<Statement, &'static str> {
         let statement_token = self.curr_token.clone();
         self.next_token();
-        let expression = match self.parse_expression(Precedence::LOWEST) {
+        let expression = match self.parse_expression(Precedence::LOWEST.into_i32()) {
             Ok(x) =>x,
             Err(err) => panic!("was not able to parse expression of return statement. Token: {:?}, Error: {}", self.curr_token, err),
         };
@@ -143,7 +141,7 @@ impl<'a> Parser <'a> {
     }
 
     fn parse_expression_statement(&mut self) -> Result<Statement, &'static str> {
-        let expression = match self.parse_expression(Precedence::LOWEST) {
+        let expression = match self.parse_expression(Precedence::LOWEST.into_i32()) {
             Ok(x) => x,
             Err(err) => panic!("was not able to parse expression of expression statement. Token: {:?}, Error: {}", self.curr_token, err),
         };
@@ -153,7 +151,7 @@ impl<'a> Parser <'a> {
         Ok(Statement::EXPRESSION(ExpressionStatement::new(self.curr_token.clone(), expression)))
     }
 
-    fn parse_expression(&mut self, precedence: Precedence) -> Result<MonkeyExpression, &'static str> {
+    fn parse_expression(&mut self, precedence: i32) -> Result<MonkeyExpression, &'static str> {
         let mut left_expr: Result<MonkeyExpression, &'static str>;
         
         //eeh sketchy, im not checking if curr_token.tokentype is a key in hashmap
@@ -161,7 +159,7 @@ impl<'a> Parser <'a> {
 
         left_expr = prefix(self);
 
-        while self.peek_token.tokentype != TokenType::SEMICOLON && precedence.into_i32() < self.get_precedence(true).into_i32() {
+        while self.peek_token.tokentype != TokenType::SEMICOLON && precedence < self.get_precedence(true).into_i32() {
             let infix = self.infix_parse_fns[&self.peek_token.tokentype];
             self.next_token();
             left_expr = infix(self, left_expr.unwrap());
@@ -190,18 +188,27 @@ impl<'a> Parser <'a> {
         )
     }
 
+    fn parse_boolean(&mut self) -> Result<MonkeyExpression, &'static str> {
+        Ok(
+            MonkeyExpression::BOOLEAN(
+                Boolean::new(self.curr_token.clone(), self.currtoken_is(TokenType::TRUE))
+            )
+        )
+        
+    }
+
     fn parse_prefix_expression(&mut self) -> Result<MonkeyExpression, &'static str> {
         let tok = self.curr_token.clone();
         let op = self.curr_token.literal.clone();
         self.next_token();
-        let right = self.parse_expression(Precedence::PREFIX).unwrap();
+        let right = self.parse_expression(Precedence::PREFIX.into_i32()).unwrap();
         Ok(MonkeyExpression::PREFIX(PrefixExpression::new(tok, op, right)))
 
     }
 
     fn parse_infix_expression(&mut self, left: MonkeyExpression) -> Result<MonkeyExpression, &'static str> {
         let token = self.curr_token.clone();
-        let precedence = self.get_precedence(false);
+        let precedence = self.get_precedence(false).into_i32();
         self.next_token();
         Ok(MonkeyExpression::INFIX(
             InfixExpression::new(

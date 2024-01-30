@@ -198,11 +198,33 @@ impl Node for IntegerLiteral {
     }
 }
 impl Expression for IntegerLiteral {
-    fn expression_node(&self) {
-        
-    }
+    fn expression_node(&self) {}
 }
 
+#[derive(Debug)]
+pub struct Boolean {
+    pub token: Token,
+    pub value: bool,
+}
+impl Boolean {
+    pub fn new(tok: Token, val: bool) -> Boolean {
+        Boolean { token: tok, value: val }
+    }
+}
+impl MonkeyExpr for Boolean {}
+
+impl Node for Boolean {
+    fn token_literal(&self) -> Option<&String> {
+        if &self.token.literal != "" {
+            Some(&self.token.literal)
+        } else {
+            None
+        }
+    }
+}
+impl Expression for Boolean {
+    fn expression_node(&self) {}
+}
 #[derive(Debug)]
 pub struct PrefixExpression {
     pub token: Token,
