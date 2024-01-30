@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::lexer::Lexer;
-use crate::ast::{Programm, Statement, MonkeyExpression, MonkeyExpr};
+use crate::ast::{Programm, Statement, MonkeyExpression};
 use crate::token::{Boolean, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Token, TokenType};
 
 pub struct Parser<'a> {
@@ -32,11 +32,14 @@ impl<'a> Parser <'a> {
         p.register_infix_fn(TokenType::EQ, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::NOTEQ, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::LT, Parser::parse_infix_expression);
+        p.register_infix_fn(TokenType::LTEQ, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::GT, Parser::parse_infix_expression);
+        p.register_infix_fn(TokenType::GTEQ, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::PLUS, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::MINUS, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::ASTERISK, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::SLASH, Parser::parse_infix_expression);
+        p.register_infix_fn(TokenType::POWER, Parser::parse_infix_expression);
 
         p
     }
@@ -225,8 +228,10 @@ impl<'a> Parser <'a> {
         match token.tokentype {
             TokenType::EQ | TokenType::NOTEQ => Precedence::EQUAL,
             TokenType::GT | TokenType::LT => Precedence::LESSGREATER,
+            TokenType::GTEQ | TokenType::LTEQ => Precedence::LESSGREATER,
             TokenType::PLUS | TokenType::MINUS => Precedence::SUM,
             TokenType::ASTERISK | TokenType::SLASH => Precedence::PRODUCT,
+            TokenType::POWER => Precedence::POWER,
             _ => Precedence::LOWEST
         }
     }
@@ -254,6 +259,7 @@ pub enum Precedence {
     LESSGREATER,
     SUM,
     PRODUCT,
+    POWER,
     PREFIX,
     CALL,
 }
@@ -265,8 +271,9 @@ impl Precedence {
             Self::LESSGREATER => 3,
             Self::SUM => 4,
             Self::PRODUCT => 5,
-            Self::PREFIX => 6,
-            Self::CALL => 7,
+            Self::POWER => 6,
+            Self::PREFIX => 7,
+            Self::CALL => 8,
         }
     }
     pub fn from_i32(int: i32) -> Option<Precedence> {
@@ -276,8 +283,9 @@ impl Precedence {
             3 => Some(Precedence::LESSGREATER),
             4 => Some(Precedence::SUM),
             5 => Some(Precedence::PRODUCT),
-            6 => Some(Precedence::PREFIX),
-            7 => Some(Precedence::CALL),
+            6 => Some(Precedence::POWER),
+            7 => Some(Precedence::PREFIX),
+            8 => Some(Precedence::CALL),
             _ => None
         }
     }
