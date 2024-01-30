@@ -28,6 +28,7 @@ impl<'a> Parser <'a> {
         p.register_prefix_fn(TokenType::MINUS, Parser::parse_prefix_expression);
         p.register_prefix_fn(TokenType::FALSE, Parser::parse_boolean);
         p.register_prefix_fn(TokenType::TRUE, Parser::parse_boolean);
+        p.register_prefix_fn(TokenType::LPAREN, Parser::parse_grouped_expression);
 
         p.register_infix_fn(TokenType::EQ, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::NOTEQ, Parser::parse_infix_expression);
@@ -169,6 +170,17 @@ impl<'a> Parser <'a> {
         }
         left_expr
     
+    }
+
+    fn parse_grouped_expression(&mut self) -> Result<MonkeyExpression, &'static str> {
+        self.next_token();
+        let expression = self.parse_expression(Precedence::LOWEST.into_i32());
+        if !self.expect_peek(TokenType::RPAREN) {
+            return Err("Error during parsing grouped expression. Did not find closing )")
+        }
+
+        expression
+
     }
 
     fn parse_identifier(&mut self) -> Result<MonkeyExpression, &'static str> {
