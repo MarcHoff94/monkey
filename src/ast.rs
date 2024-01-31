@@ -1,4 +1,4 @@
-use crate::token::{Boolean, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement};
+use crate::token::{BlockStatement, Boolean, ExpressionStatement, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement};
 use std::fmt::Debug;
 
 pub trait MonkeyExpr: Expression + Node + Debug {}
@@ -17,6 +17,7 @@ pub enum MonkeyExpression {
     BOOLEAN(Boolean),
     PREFIX(PrefixExpression),
     INFIX(InfixExpression),
+    IF(IfExpression),
 }
 impl MonkeyExpression {
     pub fn into_expr(self) -> Box<dyn MonkeyExpr> {
@@ -26,6 +27,7 @@ impl MonkeyExpression {
             Self::BOOLEAN(x) => Box::new(x),
             Self::PREFIX(x) => Box::new(x),
             Self::INFIX(x) => Box::new(x),
+            Self::IF(x) => Box::new(x),
         }
     }
 }
@@ -37,6 +39,7 @@ impl Node for MonkeyExpression {
             Self::BOOLEAN(expr) => expr.token_literal(),
             Self::PREFIX(expr) => expr.token_literal(),
             Self::INFIX(expr) => expr.token_literal(),
+            Self::IF(expr) => expr.token_literal(),
         }
     }
 }
@@ -52,6 +55,7 @@ pub enum Statement {
     LET(LetStatement),
     RETURN(ReturnStatement),
     EXPRESSION(ExpressionStatement),
+    BLOCK(BlockStatement)
 }
 impl Node for Statement {
     fn token_literal(&self) -> Option<&String> {
@@ -59,6 +63,7 @@ impl Node for Statement {
             Self::LET(statement) => statement.token_literal(),
             Self::RETURN(statement) => statement.token_literal(),
             Self::EXPRESSION(statement) => statement.token_literal(),
+            Self::BLOCK(statement) => statement.token_literal(),
         }
     }
 }

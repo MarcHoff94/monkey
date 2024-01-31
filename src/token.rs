@@ -2,6 +2,7 @@ use crate::ast::Expression;
 use crate::ast::MonkeyExpr;
 use crate::ast::MonkeyExpression;
 use crate::ast::Node;
+use crate::ast::Statement;
 
 
 #[derive(Debug, Clone)]
@@ -64,7 +65,7 @@ pub enum TokenType {
 }
 impl TokenType {
     pub fn lookup_keyword(keyword: &str) -> TokenType {
-        let result = match keyword {
+        let result = match keyword.to_lowercase().as_str() {
             "function" => TokenType::FUNCTION,
             "let" => TokenType::LET,
             "true" => TokenType::TRUE,
@@ -147,6 +148,31 @@ impl Expression for ExpressionStatement {
     fn expression_node(&self) {
         
     }
+}
+
+#[derive(Debug)]
+pub struct BlockStatement {
+    token: Token,
+    pub statements: Vec<Statement>,
+}
+impl BlockStatement {
+    pub fn new(tok: Token, statements: Vec<Statement>) -> BlockStatement {
+        BlockStatement {token: tok, statements: statements}
+    }
+}
+impl MonkeyExpr for BlockStatement {}
+
+impl Node for BlockStatement {
+    fn token_literal(&self) -> Option<&String> {
+        if &self.token.literal != "" {
+            Some(&self.token.literal)
+        } else {
+            None
+        }
+    }
+}
+impl Expression for BlockStatement {
+    fn expression_node(&self) {}
 }
 
 #[derive(Debug)]
@@ -282,4 +308,26 @@ impl Expression for InfixExpression {
     fn expression_node(&self) {
         
     }
+}
+#[derive(Debug)]
+pub struct IfExpression {
+    tok: Token,
+    condition: Box<dyn MonkeyExpr>,
+    consequence: BlockStatement,
+    alternative: Option<BlockStatement>,
+}
+impl IfExpression {
+    pub fn new(tok: Token, condition: Box<dyn MonkeyExpr>, consequence: BlockStatement, alternative: Option<BlockStatement>) -> IfExpression {
+        IfExpression { tok:tok, condition: condition, consequence: consequence, alternative: alternative }
+    }
+}
+impl MonkeyExpr for IfExpression {}
+
+impl Node for IfExpression {
+    fn token_literal(&self) -> Option<&String> {
+        self.condition.token_literal()
+    }
+}
+impl Expression for IfExpression {
+    fn expression_node(&self) {}
 }

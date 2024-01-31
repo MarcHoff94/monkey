@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::lexer::Lexer;
 use crate::ast::{Programm, Statement, MonkeyExpression};
-use crate::token::{Boolean, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Token, TokenType};
+use crate::token::{BlockStatement, Boolean, ExpressionStatement, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Token, TokenType};
 
 pub struct Parser<'a> {
     lexer: &'a mut Lexer,
@@ -29,6 +29,7 @@ impl<'a> Parser <'a> {
         p.register_prefix_fn(TokenType::FALSE, Parser::parse_boolean);
         p.register_prefix_fn(TokenType::TRUE, Parser::parse_boolean);
         p.register_prefix_fn(TokenType::LPAREN, Parser::parse_grouped_expression);
+        p.register_prefix_fn(TokenType::IF, Parser::parse_if_expression);
 
         p.register_infix_fn(TokenType::EQ, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::NOTEQ, Parser::parse_infix_expression);
@@ -59,27 +60,10 @@ impl<'a> Parser <'a> {
         let mut parsed_statement: Statement;
         loop {
             
-            match self.curr_token.tokentype {
-                TokenType::LET => {
-                    parsed_statement = match self.parse_let_statement() {
-                        Ok(x) => x,
-                        Err(err) => panic!("Error parsing let statement: {}",err),
-                    };
-                },
-                TokenType::RETURN => {
-                    parsed_statement = match self.parse_return_statement() {
-                        Ok(x) => x,
-                        Err(err) => panic!("Error parsing return statment: {}", err),
-                    }
-                }
-                TokenType::EOF => break,
-                _ => {
-                    parsed_statement = match self.parse_expression_statement() {
-                        Ok(x) => x,
-                        Err(err) => panic!("Error parsing return statment: {}", err)
-                    }
-                },
-            }
+            parsed_statement = match self.parse_statement() {
+                Some(x) => x,
+                None => break,
+            };
 
             println!("{:#?}", parsed_statement);
             programm.statements.push(parsed_statement);
@@ -95,6 +79,30 @@ impl<'a> Parser <'a> {
     fn next_token(&mut self) {
         self.curr_token = self.peek_token.clone();
         self.peek_token = self.lexer.next_token();
+    }
+
+    fn parse_statement(&mut self) -> Option<Statement> {
+        match self.curr_token.tokentype {
+            TokenType::LET => {
+                match self.parse_let_statement() {
+                    Ok(x) => Some(x),
+                    Err(err) => panic!("Error parsing let statement: {}",err),
+                }
+            },
+            TokenType::RETURN => {
+                match self.parse_return_statement() {
+                    Ok(x) => Some(x),
+                    Err(err) => panic!("Error parsing return statment: {}", err),
+                }
+            }
+            TokenType::EOF => None,
+            _ => {
+                match self.parse_expression_statement() {
+                    Ok(x) => Some(x),
+                    Err(err) => panic!("Error parsing return statment: {}", err)
+                }
+            },
+        }
     }
 
     fn parse_let_statement(&mut self) -> Result<Statement, &'static str> {
@@ -155,6 +163,20 @@ impl<'a> Parser <'a> {
         Ok(Statement::EXPRESSION(ExpressionStatement::new(self.curr_token.clone(), expression)))
     }
 
+    fn parse_block_statement(&mut self) -> Result<BlockStatement, &'static str> {
+        let mut block_statement = BlockStatement::new(self.curr_token.clone(), Vec::new());
+        self.next_token();
+        while !self.currtoken_is(TokenType::RBRACE) && !self.currtoken_is(TokenType::EOF) {
+            let statement = match self.parse_statement() {
+                Some(x) => x,
+                None => break,
+            };
+            block_statement.statements.push(statement);
+            self.next_token();
+        }
+        Ok(block_statement)
+    }
+
     fn parse_expression(&mut self, precedence: i32) -> Result<MonkeyExpression, &'static str> {
         let mut left_expr: Result<MonkeyExpression, &'static str>;
         
@@ -181,6 +203,39 @@ impl<'a> Parser <'a> {
 
         expression
 
+    }
+
+    fn parse_if_expression(&mut self) -> Result<MonkeyExpression, &'static str> {
+        let if_token = self.curr_token.clone();
+        if !self.expect_peek(TokenType::LPAREN) {
+           panic!("Opening braces missing. condition of If-expression needs to be in brackets => (<condition>)")
+        }
+        self.next_token();
+        let condition = self.parse_expression(Precedence::LOWEST.into_i32()).unwrap();
+        
+        if !self.expect_peek(TokenType::RPAREN) {
+            panic!("Closing braces missing. condition of If-expression needs to be in brackets => (<condition>)")
+        }
+        if !self.expect_peek(TokenType::LBRACE) {
+            panic!("\"{{\" missing. the following blockstatement needs to be look like this => {{<BlockStatement>}}")
+        }
+        let consequence = self.parse_block_statement().unwrap();
+        let alternative: Option<BlockStatement>;
+        println!("{:#?}", self.curr_token);
+        if self.peektoken_is(TokenType::ELSE) {
+            self.next_token();
+            if !self.expect_peek(TokenType::LBRACE) {
+                panic!("\"{{\" missing. the following blockstatement needs to be look like this => {{<BlockStatement>}}")
+            }
+            alternative = Some(self.parse_block_statement().unwrap());
+        } else {
+            alternative = None;
+        }
+
+        Ok(MonkeyExpression::IF(
+            IfExpression::new(if_token, condition.into_expr(), consequence, alternative)
+        ))
+        
     }
 
     fn parse_identifier(&mut self) -> Result<MonkeyExpression, &'static str> {
