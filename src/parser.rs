@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::lexer::Lexer;
 use crate::ast::{Programm, Statement, MonkeyExpression};
-use crate::token::{BlockStatement, Boolean, ExpressionStatement, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Token, TokenType};
+use crate::token::{BlockStatement, Boolean, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Token, TokenType};
 
 pub struct Parser<'a> {
     lexer: &'a mut Lexer,
@@ -30,6 +30,7 @@ impl<'a> Parser <'a> {
         p.register_prefix_fn(TokenType::TRUE, Parser::parse_boolean);
         p.register_prefix_fn(TokenType::LPAREN, Parser::parse_grouped_expression);
         p.register_prefix_fn(TokenType::IF, Parser::parse_if_expression);
+        p.register_prefix_fn(TokenType::FUNCTION, Parser::parse_function_literal);
 
         p.register_infix_fn(TokenType::EQ, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::NOTEQ, Parser::parse_infix_expression);
@@ -205,6 +206,51 @@ impl<'a> Parser <'a> {
 
     }
 
+    fn parse_function_literal(&mut self) -> Result<MonkeyExpression, &'static str> {
+        let func_tok = self.curr_token.clone();
+
+        if !self.expect_peek(TokenType::LPAREN) {
+            panic!("Error parsing function: fn needs to be followed up with (). curr_token: {:#?}", self.curr_token)
+        }
+
+        let params = self.parse_function_parameters().unwrap();
+    
+        if !self.expect_peek(TokenType::LBRACE) {
+            panic!("Error parsing function: missing opening bracket \"{{\" for blockstatement curr_tocken: {:#?}", self.curr_token)
+        }
+
+        let blockstatement = self.parse_block_statement().unwrap();
+
+        Ok(MonkeyExpression::FUNCTIONLITERAL(
+            FunctionLiteral::new(func_tok, params, blockstatement)
+        ))
+    }
+
+    fn parse_function_parameters(&mut self) -> Result<Vec<Identifier>, &'static str> {
+        let mut identifiers: Vec<Identifier> = Vec::new();
+        if self.peektoken_is(TokenType::LPAREN) {
+            self.next_token();
+            return Ok(identifiers)
+        }
+        self.next_token();
+
+        let mut ident = Identifier::new(self.curr_token.clone(), self.curr_token.literal.clone());
+        identifiers.push(ident);
+
+        while self.peektoken_is(TokenType::COMMA) {
+            self.next_token();
+            self.next_token();
+
+            ident = Identifier::new(self.curr_token.clone(), self.curr_token.literal.clone());
+            identifiers.push(ident);
+        }
+
+        if !self.expect_peek(TokenType::RPAREN) {
+            panic!("Error parsing function parameters: missing ). curr_token: {:#?}", self.curr_token)
+        }
+        Ok(identifiers)
+    }
+
     fn parse_if_expression(&mut self) -> Result<MonkeyExpression, &'static str> {
         let if_token = self.curr_token.clone();
         if !self.expect_peek(TokenType::LPAREN) {
@@ -221,7 +267,6 @@ impl<'a> Parser <'a> {
         }
         let consequence = self.parse_block_statement().unwrap();
         let alternative: Option<BlockStatement>;
-        println!("{:#?}", self.curr_token);
         if self.peektoken_is(TokenType::ELSE) {
             self.next_token();
             if !self.expect_peek(TokenType::LBRACE) {

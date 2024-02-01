@@ -66,7 +66,7 @@ pub enum TokenType {
 impl TokenType {
     pub fn lookup_keyword(keyword: &str) -> TokenType {
         let result = match keyword.to_lowercase().as_str() {
-            "function" => TokenType::FUNCTION,
+            "fn" => TokenType::FUNCTION,
             "let" => TokenType::LET,
             "true" => TokenType::TRUE,
             "false" => TokenType::FALSE,
@@ -308,6 +308,32 @@ impl Expression for InfixExpression {
     fn expression_node(&self) {
         
     }
+}
+
+#[derive(Debug)]
+pub struct FunctionLiteral {
+    token: Token,
+    parameters: Vec<Identifier>,
+    blockstatment: BlockStatement,
+}
+impl FunctionLiteral {
+    pub fn new(tok: Token, params: Vec<Identifier>, blockstatement: BlockStatement) -> FunctionLiteral {
+        FunctionLiteral { token: tok, parameters: params, blockstatment: blockstatement }
+    } 
+}
+impl MonkeyExpr for FunctionLiteral {}
+
+impl Node for FunctionLiteral {
+    fn token_literal(&self) -> Option<&String> {
+        if &self.token.literal != "" {
+            Some(&self.token.literal)
+        } else {
+            None
+        }
+    }
+}
+impl Expression for FunctionLiteral {
+    fn expression_node(&self) {}
 }
 #[derive(Debug)]
 pub struct IfExpression {

@@ -5,8 +5,13 @@ return 8;
 false;
 js != 42;
 If (3>2) {
-    x == 5
+   if (x == 5) {
+    let world = 5;
+   };
 } else {
     x < 3
 };
-let u = 5;
+let add = fn(x,y) {
+    let z = x + y;
+    return z;
+};

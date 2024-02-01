@@ -1,4 +1,4 @@
-use crate::token::{BlockStatement, Boolean, ExpressionStatement, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement};
+use crate::token::{BlockStatement, Boolean, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement};
 use std::fmt::Debug;
 
 pub trait MonkeyExpr: Expression + Node + Debug {}
@@ -18,6 +18,7 @@ pub enum MonkeyExpression {
     PREFIX(PrefixExpression),
     INFIX(InfixExpression),
     IF(IfExpression),
+    FUNCTIONLITERAL(FunctionLiteral)
 }
 impl MonkeyExpression {
     pub fn into_expr(self) -> Box<dyn MonkeyExpr> {
@@ -28,6 +29,7 @@ impl MonkeyExpression {
             Self::PREFIX(x) => Box::new(x),
             Self::INFIX(x) => Box::new(x),
             Self::IF(x) => Box::new(x),
+            Self::FUNCTIONLITERAL(x) => Box::new(x)
         }
     }
 }
@@ -40,6 +42,7 @@ impl Node for MonkeyExpression {
             Self::PREFIX(expr) => expr.token_literal(),
             Self::INFIX(expr) => expr.token_literal(),
             Self::IF(expr) => expr.token_literal(),
+            Self::FUNCTIONLITERAL(expr) => expr.token_literal(),
         }
     }
 }
