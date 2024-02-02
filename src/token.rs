@@ -357,3 +357,31 @@ impl Node for IfExpression {
 impl Expression for IfExpression {
     fn expression_node(&self) {}
 }
+
+#[derive(Debug)]
+pub struct CallExpression {
+    token: Token,
+    function: Box<dyn MonkeyExpr>,
+    arguments: Option<Vec<Box<dyn MonkeyExpr>>>,
+}
+
+impl  CallExpression {
+    pub fn new(tok: Token, function: Box<dyn MonkeyExpr>, arguments: Option<Vec<Box<dyn MonkeyExpr>>>) -> CallExpression {
+        CallExpression { token: tok, function, arguments }
+    }
+}
+
+impl MonkeyExpr for CallExpression {}
+
+impl Node for CallExpression {
+    fn token_literal(&self) -> Option<&String> {
+        if &self.token.literal != "" {
+            Some(&self.token.literal)
+        } else {
+            None
+        }       
+    }
+}
+impl Expression for CallExpression {
+    fn expression_node(&self) {}
+}

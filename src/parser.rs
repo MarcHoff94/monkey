@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
 use crate::lexer::Lexer;
-use crate::ast::{Programm, Statement, MonkeyExpression};
-use crate::token::{BlockStatement, Boolean, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Token, TokenType};
+use crate::ast::{MonkeyExpr, MonkeyExpression, Programm, Statement};
+use crate::token::{BlockStatement, Boolean, CallExpression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement, Token, TokenType};
 
 pub struct Parser<'a> {
     lexer: &'a mut Lexer,
     curr_token: Token,
     peek_token: Token,
     prefix_parse_fns: HashMap<TokenType, fn(&mut Parser<'a>) -> Result<MonkeyExpression, &'static str>>,
-    infix_parse_fns: HashMap<TokenType, fn(&mut Parser<'a>, left : MonkeyExpression) -> Result<MonkeyExpression, &'static str>>
+    infix_parse_fns: HashMap<TokenType, fn(&mut Parser<'a>, left : Box<dyn MonkeyExpr>) -> Result<MonkeyExpression, &'static str>>
 }
 impl<'a> Parser <'a> {
     pub fn new(lexer: &'a mut Lexer) -> Parser<'a> {
@@ -32,6 +32,7 @@ impl<'a> Parser <'a> {
         p.register_prefix_fn(TokenType::IF, Parser::parse_if_expression);
         p.register_prefix_fn(TokenType::FUNCTION, Parser::parse_function_literal);
 
+        p.register_infix_fn(TokenType::LPAREN, Parser::parse_call_expression);
         p.register_infix_fn(TokenType::EQ, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::NOTEQ, Parser::parse_infix_expression);
         p.register_infix_fn(TokenType::LT, Parser::parse_infix_expression);
@@ -50,7 +51,7 @@ impl<'a> Parser <'a> {
         self.prefix_parse_fns.insert(tok_type, parse_func);
     }
 
-    fn register_infix_fn(&mut self, tok_type: TokenType, parse_func: fn(&mut Parser<'a>, expr: MonkeyExpression) -> Result<MonkeyExpression, &'static str>) {
+    fn register_infix_fn(&mut self, tok_type: TokenType, parse_func: fn(&mut Parser<'a>, expr: Box<dyn MonkeyExpr>) -> Result<MonkeyExpression, &'static str>) {
         self.infix_parse_fns.insert(tok_type, parse_func);
     }
     //alot of cloning going on here :/ -> needs to be fixed
@@ -189,7 +190,7 @@ impl<'a> Parser <'a> {
         while self.peek_token.tokentype != TokenType::SEMICOLON && precedence < self.get_precedence(true).into_i32() {
             let infix = self.infix_parse_fns[&self.peek_token.tokentype];
             self.next_token();
-            left_expr = infix(self, left_expr.unwrap());
+            left_expr = infix(self, left_expr.unwrap().into_expr());
         }
         left_expr
     
@@ -321,7 +322,7 @@ impl<'a> Parser <'a> {
 
     }
 
-    fn parse_infix_expression(&mut self, left: MonkeyExpression) -> Result<MonkeyExpression, &'static str> {
+    fn parse_infix_expression(&mut self, left: Box<dyn MonkeyExpr>) -> Result<MonkeyExpression, &'static str> {
         let token = self.curr_token.clone();
         let precedence = self.get_precedence(false).into_i32();
         self.next_token();
@@ -329,12 +330,39 @@ impl<'a> Parser <'a> {
             InfixExpression::new(
                 token.literal.clone(),
                 token,
-                left.into_expr(),
+                left,
                 self.parse_expression(precedence).unwrap().into_expr()
             )   
         ))
     }
 
+    fn parse_call_expression(&mut self, function: Box<dyn MonkeyExpr>) -> Result<MonkeyExpression, &'static str> {
+        let tok = self.curr_token.clone();
+        let args = self.parse_call_arguments();
+        Ok(MonkeyExpression::CALL(CallExpression::new(tok, function, args)))
+    }
+    fn parse_call_arguments(&mut self) -> Option<Vec<Box<dyn MonkeyExpr>>> {
+
+        if self.peektoken_is(TokenType::RPAREN) {
+            self.next_token();
+            return None
+        }
+
+        let mut args : Vec<Box<dyn MonkeyExpr>> = Vec::new();
+        self.next_token();
+        args.push(self.parse_expression(Precedence::LOWEST.into_i32()).unwrap().into_expr());
+
+        while self.peektoken_is(TokenType::COMMA) {
+            self.next_token();
+            self.next_token();
+            args.push(self.parse_expression(Precedence::LOWEST.into_i32()).unwrap().into_expr())
+        }
+        
+        if !self.expect_peek(TokenType::RPAREN) {
+            panic!("Error parsing arguments of function call: missing closing ). curr_token: {:#?}", self.curr_token)
+        }
+        Some(args)
+    }
     fn get_precedence(&self, peek: bool) -> Precedence {
         let token = if peek {&self.peek_token} else {&self.curr_token};
         match token.tokentype {
@@ -344,6 +372,7 @@ impl<'a> Parser <'a> {
             TokenType::PLUS | TokenType::MINUS => Precedence::SUM,
             TokenType::ASTERISK | TokenType::SLASH => Precedence::PRODUCT,
             TokenType::POWER => Precedence::POWER,
+            TokenType::LPAREN => Precedence::CALL,
             _ => Precedence::LOWEST
         }
     }
