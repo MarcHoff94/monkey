@@ -15,4 +15,4 @@ let add = fn(x,y) {
     let z = x + y;
     return z;
 };
-add();
+add(4, 4+3*5^2, next(poops))

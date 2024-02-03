@@ -74,8 +74,18 @@ impl Node for Statement {
     }
 }
 
+#[derive(Debug)]
 pub struct Programm {
     pub statements: Vec<Statement>,
+}
+impl Programm {
+    pub fn print_programm(&self) {
+        let mut result = String::new();
+        for stmt in &self.statements{
+            result.push_str(stmt.token_literal().unwrap())
+        }
+        println!("{}", result);
+    }
 }
 impl Node for Programm {
     fn token_literal(&self) -> Option<&String> {

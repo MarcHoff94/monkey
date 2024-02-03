@@ -332,7 +332,7 @@ impl<'a> Parser <'a> {
                 token,
                 left,
                 self.parse_expression(precedence).unwrap().into_expr()
-            )   
+            )
         ))
     }
 
