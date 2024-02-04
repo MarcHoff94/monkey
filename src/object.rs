@@ -6,7 +6,7 @@ pub enum ObjectType {
     BOOLEAN,
     NULL,
 }
-trait Object: ObjectInterface + Debug {}
+pub trait Object: ObjectInterface + Debug {}
 
 pub trait ObjectInterface {
     fn r#type(&self) -> ObjectType;

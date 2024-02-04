@@ -1,8 +1,10 @@
 use crate::ast::Expression;
 use crate::ast::MonkeyExpr;
 use crate::ast::MonkeyExpression;
+use crate::ast::MonkeyStatement;
 use crate::ast::Node;
 use crate::ast::Statement;
+use crate::ast::NodeType;
 
 
 #[derive(Debug, Clone)]
@@ -90,6 +92,8 @@ impl LetStatement {
         LetStatement{token: tok, name: name, value: value}
     }
 }
+impl MonkeyStatement for LetStatement {}
+
 impl Node for LetStatement {
     fn token_literal(&self) -> Option<&String> {
         if &self.token.literal != "" {
@@ -97,6 +101,9 @@ impl Node for LetStatement {
         } else {
             None
         }
+    }
+    fn node_type(&self) -> NodeType {
+        NodeType::STATEMENT
     }
 }
 
@@ -110,6 +117,7 @@ impl ReturnStatement {
         ReturnStatement {token: tok, return_value: expr}
     }
 }
+impl MonkeyStatement for ReturnStatement {}
 
 impl Node for ReturnStatement {
     fn token_literal(&self) -> Option<&String> {
@@ -118,6 +126,9 @@ impl Node for ReturnStatement {
         } else {
             None   
         }
+    }
+    fn node_type(&self) -> NodeType {
+        NodeType::STATEMENT
     }
 }
 
@@ -133,7 +144,8 @@ impl ExpressionStatement {
         ExpressionStatement { token: tok, expression: expr }
     }
 }
-impl MonkeyExpr for ExpressionStatement {}
+impl MonkeyStatement for ExpressionStatement {}
+// impl MonkeyExpr for ExpressionStatement {}
 
 impl Node for ExpressionStatement {
     fn token_literal(&self) -> Option<&String> {
@@ -143,12 +155,15 @@ impl Node for ExpressionStatement {
             None
         }
     }
-}
-impl Expression for ExpressionStatement {
-    fn expression_node(&self) {
-        
+    fn node_type(&self) -> NodeType {
+        NodeType::STATEMENT
     }
 }
+// impl Expression for ExpressionStatement {
+//     fn expression_node(&self) {
+        
+//     }
+// }
 
 #[derive(Debug)]
 pub struct BlockStatement {
@@ -169,6 +184,9 @@ impl Node for BlockStatement {
         } else {
             None
         }
+    }
+    fn node_type(&self) -> NodeType {
+        NodeType::BLOCKSTATEMENT
     }
 }
 impl Expression for BlockStatement {
@@ -194,7 +212,10 @@ impl Node for Identifier {
         } else {
             None
         }
-    } 
+    }
+    fn node_type(&self) -> NodeType {
+        NodeType::EXPRESSION
+    }
 }
 impl Expression for Identifier {
     fn expression_node(&self) {
@@ -222,6 +243,9 @@ impl Node for IntegerLiteral {
             None
         }
     }
+    fn node_type(&self) -> NodeType {
+        NodeType::EXPRESSION
+    }
 }
 impl Expression for IntegerLiteral {
     fn expression_node(&self) {}
@@ -247,6 +271,9 @@ impl Node for Boolean {
             None
         }
     }
+    fn node_type(&self) -> NodeType {
+        NodeType::EXPRESSION
+    }
 }
 impl Expression for Boolean {
     fn expression_node(&self) {}
@@ -271,6 +298,9 @@ impl Node for PrefixExpression {
         } else {
             None
         }
+    }
+    fn node_type(&self) -> NodeType {
+        NodeType::EXPRESSION
     }
 }
 impl Expression for PrefixExpression {
@@ -303,6 +333,9 @@ impl Node for InfixExpression {
             None
         }
     }
+    fn node_type(&self) -> NodeType {
+        NodeType::EXPRESSION
+    }
 }
 impl Expression for InfixExpression {
     fn expression_node(&self) {
@@ -331,6 +364,9 @@ impl Node for FunctionLiteral {
             None
         }
     }
+    fn node_type(&self) -> NodeType {
+        NodeType::EXPRESSION
+    }
 }
 impl Expression for FunctionLiteral {
     fn expression_node(&self) {}
@@ -352,6 +388,9 @@ impl MonkeyExpr for IfExpression {}
 impl Node for IfExpression {
     fn token_literal(&self) -> Option<&String> {
         self.condition.token_literal()
+    }
+    fn node_type(&self) -> NodeType {
+        NodeType::EXPRESSION
     }
 }
 impl Expression for IfExpression {
@@ -380,6 +419,9 @@ impl Node for CallExpression {
         } else {
             None
         }       
+    }
+    fn node_type(&self) -> NodeType {
+        NodeType::EXPRESSION
     }
 }
 impl Expression for CallExpression {

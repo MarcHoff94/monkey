@@ -37,7 +37,6 @@ pub fn start(mut args: impl Iterator<Item = String>) {
     //create_tokens(&mut monkey_lexer);
     let mut monkey_parser = Parser::new(&mut monkey_lexer);
     let program = monkey_parser.parse_programm();
-    program.unwrap().print_programm();
 }
 
 fn create_tokens(monkey_lexer: &mut Lexer) {

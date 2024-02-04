@@ -2,12 +2,23 @@ use crate::token::{BlockStatement, Boolean, CallExpression, ExpressionStatement,
 use std::fmt::Debug;
 
 pub trait MonkeyExpr: Expression + Node + Debug {}
+
 pub trait Node {
     fn token_literal(&self) -> Option<&String>;
+    fn node_type(&self) -> NodeType;
 }
+pub trait MonkeyStatement: Node {}
 
 pub trait Expression {
     fn expression_node(&self);
+}
+
+#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+pub enum NodeType {
+    PROGRAM,
+    STATEMENT,
+    BLOCKSTATEMENT,
+    EXPRESSION,
 }
 
 #[derive(Debug)]
@@ -48,6 +59,9 @@ impl Node for MonkeyExpression {
             Self::CALL(expr) => expr.token_literal(),
         }
     }
+    fn node_type(&self) -> NodeType {
+        NodeType::EXPRESSION
+    }
 }
 impl Expression for MonkeyExpression {
     fn expression_node(&self) {
@@ -72,6 +86,9 @@ impl Node for Statement {
             Self::BLOCK(statement) => statement.token_literal(),
         }
     }
+    fn node_type(&self) -> NodeType {
+        NodeType::STATEMENT
+    }
 }
 
 #[derive(Debug)]
@@ -79,7 +96,7 @@ pub struct Programm {
     pub statements: Vec<Statement>,
 }
 impl Programm {
-    pub fn print_programm(&self) {
+    fn print_program(&self) {
         let mut result = String::new();
         for stmt in &self.statements{
             result.push_str(stmt.token_literal().unwrap())
@@ -97,6 +114,9 @@ impl Node for Programm {
         } else {
             None
         }
+    }
+    fn node_type(&self) -> NodeType {
+        NodeType::PROGRAM
     }
 }
 
