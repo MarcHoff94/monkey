@@ -16,3 +16,5 @@ let add = fn(x,y) {
     return z;
 };
 add(4, 4+3*5^2, next(poops))
+5;
+true;

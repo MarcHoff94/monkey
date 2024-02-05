@@ -136,7 +136,7 @@ impl Node for ReturnStatement {
 #[derive(Debug)]
 pub struct ExpressionStatement {
     token: Token,
-    expression: MonkeyExpression
+    pub expression: MonkeyExpression
 }
 
 impl ExpressionStatement {
