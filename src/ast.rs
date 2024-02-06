@@ -1,4 +1,4 @@
-use crate::token::{BlockStatement, Boolean, CallExpression, ExpressionStatement, FunctionLiteral, Identifier, IfExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, ReturnStatement};
+use crate::token::*;
 use std::fmt::Debug;
 
 pub trait MonkeyExpr: Expression + Node + Debug {}

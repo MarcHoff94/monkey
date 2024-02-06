@@ -82,9 +82,9 @@ impl TokenType {
 }
 #[derive(Debug)]
 pub struct LetStatement {
-    token: Token,
-    name: Identifier,
-    value: MonkeyExpression,
+    pub token: Token,
+    pub name: Identifier,
+    pub value: MonkeyExpression,
 
 }
 impl LetStatement {

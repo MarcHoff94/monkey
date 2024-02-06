@@ -1,6 +1,7 @@
 use crate::ast::*;
 use crate::object::*;
 use crate::token::*;
+
 pub fn eval(program: Programm) -> Vec<Box<dyn Object>> {
     let mut object: Box<dyn Object>;
     let mut results: Vec<Box<dyn Object>> = Vec::new();
@@ -17,6 +18,7 @@ pub fn eval(program: Programm) -> Vec<Box<dyn Object>> {
 
 }
 fn eval_let_statement(node: LetStatement) -> Box<dyn Object> {
+
     Box::new(Null{})
 }
 fn eval_return_statement(node: ReturnStatement) -> Box<dyn Object> {
@@ -32,6 +34,7 @@ fn eval_expr(expr: MonkeyExpression) -> Box<dyn Object> {
     match expr {
         MonkeyExpression::INTEGERLITERAL(x) => eval_integer_literal(x),
         MonkeyExpression::BOOLEAN(x) => eval_bool(x),
+        MonkeyExpression::PREFIX(x) => eval_prefix_expr(&x.operator, x.right),
         _ => Box::new(Null{}),
     }
 }
@@ -40,5 +43,20 @@ fn eval_integer_literal(int_lit: IntegerLiteral) -> Box<dyn Object> {
     Box::new(Integer::new(int_lit.value))
 }
 fn eval_bool(bool_lit: Boolean) -> Box<dyn Object> {
-    Box::new(Bool::new(bool_lit.value))
+    Box::new(Bool::new(bool_lit.value)) 
+}
+fn eval_prefix_expr(operator: &String, right_expr: Box<dyn MonkeyExpr>) -> Box<dyn Object> {
+    let right = eval_expr(right_expr.);
+    match operator.as_str() {
+        "!" => eval_bang_operator_expr(right),
+        "-" => eval_minus_operator_expr(right),
+        _ => Box::new(Null{})
+    }
+}
+fn eval_bang_operator_expr(right: Box<dyn MonkeyExpr>) -> Box<dyn Object> {
+    
+    Box::new(Null{})
+}
+fn eval_minus_operator_expr(right: Box<dyn MonkeyExpr>) -> Box<dyn Object> {
+    Box::new(Null{})
 }

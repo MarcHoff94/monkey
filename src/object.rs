@@ -5,6 +5,7 @@ pub enum ObjectType {
     INTEGER,
     BOOLEAN,
     NULL,
+    VARIABLE,
 }
 pub trait Object: ObjectInterface + Debug {}
 
@@ -34,11 +35,11 @@ impl ObjectInterface for Integer {
 
 #[derive(Debug)]
 pub struct Bool {
-    Value: bool
+    pub value: bool
 }
 impl Bool {
     pub fn new(val:bool) -> Bool {
-        Bool{ Value: val}
+        Bool{ value: val}
     }
 }
 impl Object for Bool {}
@@ -48,7 +49,7 @@ impl ObjectInterface for Bool {
         ObjectType::BOOLEAN
     }
     fn inspect(&self) -> String {
-        self.Value.to_string()
+        self.value.to_string()
     }
 }
 
@@ -61,5 +62,26 @@ impl ObjectInterface for Null {
     }
     fn inspect(&self) -> String {
         String::from("Null")
+    }
+}
+
+#[derive(Debug)]
+pub struct Variable {
+    name: String,
+    value: Box<dyn Object>
+}
+impl Variable {
+    pub fn new(name: String, val: Box<dyn Object>) -> Variable {
+        Variable { name: name, value:  val }
+    }
+}
+impl Object for Variable {}
+
+impl ObjectInterface for Variable {
+    fn r#type(&self) -> ObjectType {
+        ObjectType::VARIABLE
+    }
+    fn inspect(&self) -> String {
+        self.name.to_string()
     }
 }
