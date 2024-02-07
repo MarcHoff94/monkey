@@ -1,35 +1,43 @@
 use std::fmt::Debug;
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
-pub enum ObjectType {
-    INTEGER,
-    BOOLEAN,
-    NULL,
-    VARIABLE,
+#[derive(Debug)]
+pub enum MonkeyObject {
+    INTEGER(Integer),
+    BOOLEAN(Bool),
+    NULL(Null),
+    VARIABLE(Variable),
 }
+
+impl MonkeyObject {
+    pub fn into_obj(self) -> Box<dyn Object> {
+        match self {
+            Self::INTEGER(x) => Box::new(x),
+            Self::BOOLEAN(x) => Box::new(x),
+            Self::NULL(x) => Box::new(x),
+            Self::VARIABLE(x) => Box::new(x),
+        }
+    }
+}
+
 pub trait Object: ObjectInterface + Debug {}
 
 pub trait ObjectInterface {
-    fn r#type(&self) -> ObjectType;
     fn inspect(&self) -> String;
 }
 #[derive(Debug)]
 pub struct Integer {
-    Value: i64
+    pub value: i64
 }
 impl Integer {
     pub fn new(val: i64) -> Integer {
-        Integer { Value: val }
+        Integer { value: val }
     }
 }
 impl Object for Integer {}
 
 impl ObjectInterface for Integer {
-    fn r#type(&self) -> ObjectType {
-        ObjectType::INTEGER
-    }
     fn inspect(&self) -> String {
-        self.Value.to_string()
+        self.value.to_string()
     }
 }
 
@@ -45,9 +53,6 @@ impl Bool {
 impl Object for Bool {}
 
 impl ObjectInterface for Bool {
-    fn r#type(&self) -> ObjectType {
-        ObjectType::BOOLEAN
-    }
     fn inspect(&self) -> String {
         self.value.to_string()
     }
@@ -57,9 +62,6 @@ impl ObjectInterface for Bool {
 pub struct Null {}
 impl Object for Null {}
 impl ObjectInterface for Null {
-    fn r#type(&self) -> ObjectType {
-        ObjectType::NULL
-    }
     fn inspect(&self) -> String {
         String::from("Null")
     }
@@ -68,19 +70,16 @@ impl ObjectInterface for Null {
 #[derive(Debug)]
 pub struct Variable {
     name: String,
-    value: Box<dyn Object>
+    value: Box<MonkeyObject>,
 }
 impl Variable {
-    pub fn new(name: String, val: Box<dyn Object>) -> Variable {
+    pub fn new(name: String, val: Box<MonkeyObject>) -> Variable {
         Variable { name: name, value:  val }
     }
 }
 impl Object for Variable {}
 
 impl ObjectInterface for Variable {
-    fn r#type(&self) -> ObjectType {
-        ObjectType::VARIABLE
-    }
     fn inspect(&self) -> String {
         self.name.to_string()
     }

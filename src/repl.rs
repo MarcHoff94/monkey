@@ -29,11 +29,11 @@ pub fn start(mut args: impl Iterator<Item = String>) {
     //     Some(x) => x,
     //     None => panic!("Error: could not open monkeyfile"),
     // };
-
     let mut monkey_lexer = match fs::read_to_string(filepath) {
         Ok(l) => Lexer::new(l),
         Err(err) => panic!("Could not create lexer. Error: {}", err),
     };
+    println!("{}", monkey_lexer.input);
     //create_tokens(&mut monkey_lexer);
     let mut monkey_parser = Parser::new(&mut monkey_lexer);
     let program = monkey_parser.parse_programm();

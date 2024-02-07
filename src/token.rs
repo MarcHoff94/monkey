@@ -282,7 +282,7 @@ impl Expression for Boolean {
 pub struct PrefixExpression {
     pub token: Token,
     pub operator: String,
-    pub right: Box<dyn MonkeyExpr>,
+    pub right: Box<MonkeyExpression>,
 }
 impl PrefixExpression {
     pub fn new(tok: Token, op: String, right: MonkeyExpression) -> PrefixExpression {
@@ -313,13 +313,13 @@ impl Expression for PrefixExpression {
 pub struct InfixExpression {
     pub token: Token,
     pub operator: String,
-    pub left: Box<dyn MonkeyExpr>,
-    pub right: Box<dyn MonkeyExpr>,
+    pub left: Box<MonkeyExpression>,
+    pub right: Box<MonkeyExpression>,
 }
 
 impl InfixExpression {
-    pub fn new(operator: String, tok: Token, left: Box<dyn MonkeyExpr>, right: Box<dyn MonkeyExpr>) -> InfixExpression {
-        InfixExpression { operator: operator, token: tok,  left: left, right: right }
+    pub fn new(operator: String, tok: Token, left: MonkeyExpression, right: MonkeyExpression) -> InfixExpression {
+        InfixExpression { operator: operator, token: tok,  left: Box::new(left), right: Box::new(right) }
     }
 }
 
@@ -400,13 +400,13 @@ impl Expression for IfExpression {
 #[derive(Debug)]
 pub struct CallExpression {
     token: Token,
-    function: Box<dyn MonkeyExpr>,
+    function: Box<MonkeyExpression>,
     arguments: Option<Vec<Box<dyn MonkeyExpr>>>,
 }
 
 impl  CallExpression {
-    pub fn new(tok: Token, function: Box<dyn MonkeyExpr>, arguments: Option<Vec<Box<dyn MonkeyExpr>>>) -> CallExpression {
-        CallExpression { token: tok, function, arguments }
+    pub fn new(tok: Token, function: MonkeyExpression, arguments: Option<Vec<Box<dyn MonkeyExpr>>>) -> CallExpression {
+        CallExpression { token: tok, function: Box::new(function), arguments }
     }
 }
 

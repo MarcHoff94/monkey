@@ -9,7 +9,7 @@ pub struct Parser<'a> {
     curr_token: Token,
     peek_token: Token,
     prefix_parse_fns: HashMap<TokenType, fn(&mut Parser<'a>) -> Result<MonkeyExpression, &'static str>>,
-    infix_parse_fns: HashMap<TokenType, fn(&mut Parser<'a>, left : Box<dyn MonkeyExpr>) -> Result<MonkeyExpression, &'static str>>
+    infix_parse_fns: HashMap<TokenType, fn(&mut Parser<'a>, left : MonkeyExpression) -> Result<MonkeyExpression, &'static str>>
 }
 impl<'a> Parser <'a> {
     pub fn new(lexer: &'a mut Lexer) -> Parser<'a> {
@@ -51,7 +51,7 @@ impl<'a> Parser <'a> {
         self.prefix_parse_fns.insert(tok_type, parse_func);
     }
 
-    fn register_infix_fn(&mut self, tok_type: TokenType, parse_func: fn(&mut Parser<'a>, expr: Box<dyn MonkeyExpr>) -> Result<MonkeyExpression, &'static str>) {
+    fn register_infix_fn(&mut self, tok_type: TokenType, parse_func: fn(&mut Parser<'a>, expr: MonkeyExpression) -> Result<MonkeyExpression, &'static str>) {
         self.infix_parse_fns.insert(tok_type, parse_func);
     }
     //alot of cloning going on here :/ -> needs to be fixed
@@ -67,7 +67,7 @@ impl<'a> Parser <'a> {
                 None => break,
             };
 
-            println!("{:#?}", parsed_statement);
+            // println!("{:#?}", parsed_statement);
             programm.statements.push(parsed_statement);
             let _ = &self.next_token();
         }
@@ -190,7 +190,7 @@ impl<'a> Parser <'a> {
         while self.peek_token.tokentype != TokenType::SEMICOLON && precedence < self.get_precedence(true).into_i32() {
             let infix = self.infix_parse_fns[&self.peek_token.tokentype];
             self.next_token();
-            left_expr = infix(self, left_expr.unwrap().into_expr());
+            left_expr = infix(self, left_expr.unwrap());
         }
         left_expr
     
@@ -322,7 +322,7 @@ impl<'a> Parser <'a> {
 
     }
 
-    fn parse_infix_expression(&mut self, left: Box<dyn MonkeyExpr>) -> Result<MonkeyExpression, &'static str> {
+    fn parse_infix_expression(&mut self, left: MonkeyExpression) -> Result<MonkeyExpression, &'static str> {
         let token = self.curr_token.clone();
         let precedence = self.get_precedence(false).into_i32();
         self.next_token();
@@ -331,12 +331,12 @@ impl<'a> Parser <'a> {
                 token.literal.clone(),
                 token,
                 left,
-                self.parse_expression(precedence).unwrap().into_expr()
+                self.parse_expression(precedence).unwrap()
             )
         ))
     }
 
-    fn parse_call_expression(&mut self, function: Box<dyn MonkeyExpr>) -> Result<MonkeyExpression, &'static str> {
+    fn parse_call_expression(&mut self, function: MonkeyExpression) -> Result<MonkeyExpression, &'static str> {
         let tok = self.curr_token.clone();
         let args = self.parse_call_arguments();
         Ok(MonkeyExpression::CALL(CallExpression::new(tok, function, args)))
