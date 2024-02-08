@@ -68,7 +68,7 @@ impl ObjectInterface for Null {
 }
 #[derive(Debug)]
 pub struct Block {
-    pub statements: Vec<Option<MonkeyObject>>,
+    pub statements: Vec<MonkeyObject>,
 }
 impl Object for Block {}
 impl ObjectInterface for Block {
