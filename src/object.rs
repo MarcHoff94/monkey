@@ -5,7 +5,7 @@ pub enum MonkeyObject {
     INTEGER(Integer),
     BOOLEAN(Bool),
     NULL(Null),
-    VARIABLE(Variable),
+    BLOCK(Block),
 }
 
 impl MonkeyObject {
@@ -14,7 +14,7 @@ impl MonkeyObject {
             Self::INTEGER(x) => Box::new(x),
             Self::BOOLEAN(x) => Box::new(x),
             Self::NULL(x) => Box::new(x),
-            Self::VARIABLE(x) => Box::new(x),
+            Self::BLOCK(x) => Box::new(x),
         }
     }
 }
@@ -66,21 +66,13 @@ impl ObjectInterface for Null {
         String::from("Null")
     }
 }
-
 #[derive(Debug)]
-pub struct Variable {
-    name: String,
-    value: Box<MonkeyObject>,
+pub struct Block {
+    pub statements: Vec<Option<MonkeyObject>>,
 }
-impl Variable {
-    pub fn new(name: String, val: Box<MonkeyObject>) -> Variable {
-        Variable { name: name, value:  val }
-    }
-}
-impl Object for Variable {}
-
-impl ObjectInterface for Variable {
+impl Object for Block {}
+impl ObjectInterface for Block {
     fn inspect(&self) -> String {
-        self.name.to_string()
+        String::from("Number of Statements in block:{self.statements.len()}")
     }
 }

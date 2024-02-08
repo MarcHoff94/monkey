@@ -374,12 +374,12 @@ impl Expression for FunctionLiteral {
 #[derive(Debug)]
 pub struct IfExpression {
     tok: Token,
-    condition: Box<dyn MonkeyExpr>,
-    consequence: BlockStatement,
-    alternative: Option<BlockStatement>,
+    pub condition: Box<MonkeyExpression>,
+    pub consequence: BlockStatement,
+    pub alternative: Option<BlockStatement>,
 }
 impl IfExpression {
-    pub fn new(tok: Token, condition: Box<dyn MonkeyExpr>, consequence: BlockStatement, alternative: Option<BlockStatement>) -> IfExpression {
+    pub fn new(tok: Token, condition: Box<MonkeyExpression>, consequence: BlockStatement, alternative: Option<BlockStatement>) -> IfExpression {
         IfExpression { tok:tok, condition: condition, consequence: consequence, alternative: alternative }
     }
 }

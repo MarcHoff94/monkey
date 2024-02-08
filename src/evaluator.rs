@@ -2,41 +2,39 @@ use crate::ast::*;
 use crate::object::*;
 use crate::token::*;
 
-pub fn eval(program: Programm) -> Vec<Box<dyn Object>> {
-    let mut object: Box<dyn Object>;
-    let mut results: Vec<Box<dyn Object>> = Vec::new();
-    for node in program.statements {
+pub fn eval(program: Vec<Statement>) -> Vec<Option<MonkeyObject>> {
+    let mut object: Option<MonkeyObject>;
+    let mut results: Vec<Option<MonkeyObject>> = Vec::new();
+    for node in program {
         object = match node {
             Statement::LET(stmt) => eval_let_statement(stmt),
             Statement::RETURN(stmt) => eval_return_statement(stmt),
             Statement::EXPRESSION(stmt) => eval_expr_statement(stmt),
-            Statement::BLOCK(stmt) => eval_block_statement(stmt.statements),
+            Statement::BLOCK(stmt) => Some(MonkeyObject::BLOCK(Block{statements: eval(stmt.statements)})),
         };
         results.push(object);
     }
     results
 
 }
-fn eval_let_statement(node: LetStatement) -> Box<dyn Object> {
+fn eval_let_statement(node: LetStatement) -> Option<MonkeyObject> {
+    None
+}
+fn eval_return_statement(node: ReturnStatement) -> Option<MonkeyObject> {
+    None
+}
+fn eval_expr_statement(node: ExpressionStatement) -> Option<MonkeyObject> {
+    eval_expr(node.expression)
+}
 
-    Box::new(Null{})
-}
-fn eval_return_statement(node: ReturnStatement) -> Box<dyn Object> {
-    Box::new(Null{})
-}
-fn eval_expr_statement(node: ExpressionStatement) -> Box<dyn Object> {
-    eval_expr(node.expression).into_obj()
-}
-fn eval_block_statement(stmts: Vec<Statement>) -> Box<dyn Object> {
-    Box::new(Null{})
-}
-fn eval_expr(expr: MonkeyExpression) -> MonkeyObject {
+fn eval_expr(expr: MonkeyExpression) -> Option<MonkeyObject> {
     match expr {
-        MonkeyExpression::INTEGERLITERAL(x) => eval_integer_literal(x),
-        MonkeyExpression::BOOLEAN(x) => eval_bool(x),
+        MonkeyExpression::INTEGERLITERAL(x) => Some(eval_integer_literal(x)),
+        MonkeyExpression::BOOLEAN(x) => Some(eval_bool(x)),
         MonkeyExpression::PREFIX(x) => eval_prefix_expr(&x.operator, *x.right),
-        MonkeyExpression::INFIX(x) => eval_infix_expr(x.operator.as_str(), *x.left, *x.right).unwrap(),
-        _ => MonkeyObject::NULL(Null{}),
+        MonkeyExpression::INFIX(x) => Some(eval_infix_expr(x.operator.as_str(), *x.left, *x.right).unwrap()),
+        MonkeyExpression::IF(x) => Some(eval_if_expr(x).unwrap()),
+        _ => None,
     }
 }
 
@@ -48,12 +46,15 @@ fn eval_bool(bool_lit: Boolean) -> MonkeyObject {
     MonkeyObject::BOOLEAN(Bool::new(bool_lit.value)) 
 }
 
-fn eval_prefix_expr(operator: &String, right_expr: MonkeyExpression) -> MonkeyObject {
-    let right = eval_expr(right_expr);
+fn eval_prefix_expr(operator: &String, right_expr: MonkeyExpression) -> Option<MonkeyObject> {
+    let right = match eval_expr(right_expr) {
+        Some(x) => x,
+        None => return None,
+    };
     match operator.as_str() {
-        "!" => eval_bang_operator_expr(right),
+        "!" => Some(eval_bang_operator_expr(right)),
         "-" => eval_minus_operator_expr(right),
-        _ => MonkeyObject::NULL(Null{})
+        _ => None,
     }
 }
 
@@ -68,20 +69,26 @@ fn eval_bang_operator_expr(right: MonkeyObject) -> MonkeyObject {
         _ => MonkeyObject::BOOLEAN(Bool { value: false })
     }
 }
-fn eval_minus_operator_expr(right: MonkeyObject) -> MonkeyObject {
+fn eval_minus_operator_expr(right: MonkeyObject) -> Option<MonkeyObject> {
     match right {
         MonkeyObject::INTEGER(mut x) => {
             x.value = -x.value; 
-            MonkeyObject::INTEGER(x)
+            Some(MonkeyObject::INTEGER(x))
         },
-        _ => MonkeyObject::NULL(Null{}) 
+        _ => None
     }
     
 }
 
 fn eval_infix_expr(operator: &str, left_expr: MonkeyExpression, right_expr: MonkeyExpression) -> Result<MonkeyObject, &'static str> {
-    let left = eval_expr(left_expr);
-    let right = eval_expr(right_expr);
+    let left = match eval_expr(left_expr) {
+        Some(x) => x,
+        None => panic!("Left side of infix expression was none."),
+    };
+    let right = match eval_expr(right_expr) {
+        Some(x) => x,
+        None => panic!("Right side of infix expression was none. Expression"),
+    };
     match (left, right) {
         (MonkeyObject::INTEGER(l), MonkeyObject::INTEGER(r)) => eval_integer_infix_expr(operator, &l, &r),
         (MonkeyObject::BOOLEAN(l), MonkeyObject::BOOLEAN(r)) => eval_bool_infix_expr(operator, &l, &r),
@@ -113,4 +120,25 @@ fn eval_bool_infix_expr(operator: &str, left: &Bool, right: &Bool) -> Result<Mon
         _ => panic!("illegal operator for boolean comparison: {}", operator),
     };
     Ok(result)
+}
+
+fn eval_if_expr(if_expr: IfExpression) -> Result<MonkeyObject, &'static str> {
+    let condition = match eval_expr(*if_expr.condition) {
+        Some(x) => x,
+        None => panic!("Could not evaluate condition: result of condition expression was None"),
+    };
+    let result = match condition {
+        MonkeyObject::BOOLEAN(x) => x,
+        _ => panic!("Could not evaluate condition: result of condition was no Bool"),
+    };
+    if result.value {
+        let consequence = eval(if_expr.consequence.statements);
+        Ok(MonkeyObject::BLOCK(Block{statements: consequence}))
+    } else {
+        let alternative = match if_expr.alternative {
+            Some(x) => eval(x.statements),
+            None => Vec::new(),
+        };
+        Ok(MonkeyObject::BLOCK(Block { statements: alternative }))
+    }
 }

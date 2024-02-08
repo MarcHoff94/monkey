@@ -279,7 +279,7 @@ impl<'a> Parser <'a> {
         }
 
         Ok(MonkeyExpression::IF(
-            IfExpression::new(if_token, condition.into_expr(), consequence, alternative)
+            IfExpression::new(if_token, Box::new(condition), consequence, alternative)
         ))
         
     }
