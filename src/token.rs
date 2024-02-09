@@ -110,7 +110,7 @@ impl Node for LetStatement {
 #[derive(Debug)]
 pub struct ReturnStatement {
     token: Token,
-    return_value: MonkeyExpression,
+    pub return_value: MonkeyExpression,
 }
 impl ReturnStatement {
     pub fn new(tok: Token, expr: MonkeyExpression) -> ReturnStatement {

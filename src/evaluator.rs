@@ -10,9 +10,19 @@ pub fn eval(program: Vec<Statement>) -> Vec<MonkeyObject> {
             Statement::LET(stmt) => eval_let_statement(stmt),
             Statement::RETURN(stmt) => eval_return_statement(stmt),
             Statement::EXPRESSION(stmt) => eval_expr_statement(stmt),
-            Statement::BLOCK(stmt) => MonkeyObject::BLOCK(Block{statements: eval(stmt.statements)}),
+            Statement::BLOCK(stmt) => {
+                let block_result = eval(stmt.statements);
+                if check_for_return_statement(&block_result) {
+                    return block_result
+                } else {
+                    MonkeyObject::BLOCK(Block { statements: block_result })
+                }
+            },
         };
-        results.push(object);
+        match object {
+            MonkeyObject::RETURN(x) => return vec![MonkeyObject::RETURN(x)],
+            _ => {results.push(object);}
+        }
     }
     results
 
@@ -21,7 +31,13 @@ fn eval_let_statement(node: LetStatement) -> MonkeyObject {
     MonkeyObject::NULL(Null{})
 }
 fn eval_return_statement(node: ReturnStatement) -> MonkeyObject {
-    MonkeyObject::NULL(Null{})
+    MonkeyObject::RETURN(ReturnValue::new(Box::new(eval_expr(node.return_value).unwrap())))
+}
+fn check_for_return_statement(block_result: &Vec<MonkeyObject>) -> bool {
+    match block_result.get(0).unwrap() {
+        MonkeyObject::RETURN(x) => true,
+        _ => false,
+    }
 }
 fn eval_expr_statement(node: ExpressionStatement) -> MonkeyObject {
     eval_expr(node.expression).unwrap()
@@ -127,6 +143,10 @@ fn eval_if_expr(if_expr: IfExpression) -> Result<MonkeyObject, &'static str> {
             Some(x) => eval(x.statements),
             None => Vec::new(),
         };
-        Ok(MonkeyObject::BLOCK(Block { statements: alternative }))
+        if check_for_return_statement(&alternative) {
+            return Ok(alternative[0])
+        } else {
+            Ok(MonkeyObject::BLOCK(Block { statements: alternative }))
+        }
     }
 }

@@ -1,11 +1,12 @@
 use std::fmt::Debug;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum MonkeyObject {
     INTEGER(Integer),
     BOOLEAN(Bool),
     NULL(Null),
     BLOCK(Block),
+    RETURN(ReturnValue),
 }
 
 impl MonkeyObject {
@@ -15,6 +16,7 @@ impl MonkeyObject {
             Self::BOOLEAN(x) => Box::new(x),
             Self::NULL(x) => Box::new(x),
             Self::BLOCK(x) => Box::new(x),
+            Self::RETURN(x) => Box::new(x),
         }
     }
 }
@@ -24,7 +26,7 @@ pub trait Object: ObjectInterface + Debug {}
 pub trait ObjectInterface {
     fn inspect(&self) -> String;
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Integer {
     pub value: i64
 }
@@ -41,7 +43,7 @@ impl ObjectInterface for Integer {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Bool {
     pub value: bool
 }
@@ -58,7 +60,7 @@ impl ObjectInterface for Bool {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Null {}
 impl Object for Null {}
 impl ObjectInterface for Null {
@@ -66,7 +68,7 @@ impl ObjectInterface for Null {
         String::from("Null")
     }
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Block {
     pub statements: Vec<MonkeyObject>,
 }
@@ -74,5 +76,21 @@ impl Object for Block {}
 impl ObjectInterface for Block {
     fn inspect(&self) -> String {
         String::from("Number of Statements in block:{self.statements.len()}")
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ReturnValue {
+    pub value: Box<MonkeyObject>
+}
+impl ReturnValue {
+    pub fn new(value: Box<MonkeyObject>) -> ReturnValue {
+        ReturnValue { value: value }
+    }
+}
+impl Object for ReturnValue {}
+impl ObjectInterface for ReturnValue {
+    fn inspect(&self) -> String {
+        String::from("dummy")
     }
 }
