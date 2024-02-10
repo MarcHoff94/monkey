@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyObject {
     INTEGER(Integer),
     BOOLEAN(Bool),
@@ -26,7 +26,7 @@ pub trait Object: ObjectInterface + Debug {}
 pub trait ObjectInterface {
     fn inspect(&self) -> String;
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct Integer {
     pub value: i64
 }
@@ -43,7 +43,7 @@ impl ObjectInterface for Integer {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Bool {
     pub value: bool
 }
@@ -60,7 +60,7 @@ impl ObjectInterface for Bool {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct Null {}
 impl Object for Null {}
 impl ObjectInterface for Null {
@@ -68,7 +68,7 @@ impl ObjectInterface for Null {
         String::from("Null")
     }
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Block {
     pub statements: Vec<MonkeyObject>,
 }
@@ -79,7 +79,7 @@ impl ObjectInterface for Block {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct ReturnValue {
     pub value: Box<MonkeyObject>
 }

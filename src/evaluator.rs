@@ -1,3 +1,5 @@
+use core::panic;
+
 use crate::ast::*;
 use crate::object::*;
 use crate::token::*;
@@ -10,14 +12,7 @@ pub fn eval(program: Vec<Statement>) -> Vec<MonkeyObject> {
             Statement::LET(stmt) => eval_let_statement(stmt),
             Statement::RETURN(stmt) => eval_return_statement(stmt),
             Statement::EXPRESSION(stmt) => eval_expr_statement(stmt),
-            Statement::BLOCK(stmt) => {
-                let block_result = eval(stmt.statements);
-                if check_for_return_statement(&block_result) {
-                    return block_result
-                } else {
-                    MonkeyObject::BLOCK(Block { statements: block_result })
-                }
-            },
+            Statement::BLOCK(stmt) => hanlde_block_result(eval(stmt.statements))
         };
         match object {
             MonkeyObject::RETURN(x) => return vec![MonkeyObject::RETURN(x)],
@@ -33,10 +28,11 @@ fn eval_let_statement(node: LetStatement) -> MonkeyObject {
 fn eval_return_statement(node: ReturnStatement) -> MonkeyObject {
     MonkeyObject::RETURN(ReturnValue::new(Box::new(eval_expr(node.return_value).unwrap())))
 }
-fn check_for_return_statement(block_result: &Vec<MonkeyObject>) -> bool {
-    match block_result.get(0).unwrap() {
-        MonkeyObject::RETURN(x) => true,
-        _ => false,
+fn hanlde_block_result(block_result: Vec<MonkeyObject>) -> MonkeyObject {
+    match block_result.get(0) {
+        Some(MonkeyObject::RETURN(x)) => MonkeyObject::RETURN(x.clone()),
+        Some(_) => MonkeyObject::BLOCK(Block{statements: block_result}),
+        None =>  panic!("Error: no result")
     }
 }
 fn eval_expr_statement(node: ExpressionStatement) -> MonkeyObject {
@@ -136,17 +132,11 @@ fn eval_if_expr(if_expr: IfExpression) -> Result<MonkeyObject, &'static str> {
         _ => panic!("Could not evaluate condition: result of condition was no Bool"),
     };
     if result.value {
-        let consequence = eval(if_expr.consequence.statements);
-        Ok(MonkeyObject::BLOCK(Block{statements: consequence}))
+        Ok(hanlde_block_result(eval(if_expr.consequence.statements)))
     } else {
-        let alternative = match if_expr.alternative {
-            Some(x) => eval(x.statements),
-            None => Vec::new(),
-        };
-        if check_for_return_statement(&alternative) {
-            return Ok(alternative[0])
-        } else {
-            Ok(MonkeyObject::BLOCK(Block { statements: alternative }))
+        match if_expr.alternative {
+            Some(x) => Ok(hanlde_block_result(eval(x.statements))),
+            None => Ok(MonkeyObject::BLOCK(Block { statements:Vec::new()})),
         }
     }
 }
