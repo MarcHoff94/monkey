@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{collections::HashMap, fmt::Debug};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyObject {
@@ -92,5 +92,27 @@ impl Object for ReturnValue {}
 impl ObjectInterface for ReturnValue {
     fn inspect(&self) -> String {
         String::from("dummy")
+    }
+}
+
+#[derive(Debug)]
+pub struct Environment {
+    store: HashMap<String, MonkeyObject>
+}
+impl Environment {
+    pub fn new() -> Environment {
+        Environment { store: HashMap::new() }
+    }
+    pub fn from(hashmap: HashMap<String, MonkeyObject>) -> Environment {
+        Environment{ store: hashmap}
+    }
+    pub fn get(&self, key: &String) -> Option<MonkeyObject> {
+        match self.store.get(key) {
+            Some(x) => Some(x.clone()),
+            None => None
+        }
+    }
+    pub fn set(&mut self, key: String, value: MonkeyObject) {
+        self.store.insert(key, value);
     }
 }

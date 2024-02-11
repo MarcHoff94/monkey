@@ -1,9 +1,12 @@
+use crate::object::Environment;
 use crate::parser::Parser;
 use crate::token::TokenType;
 use crate::lexer::Lexer;
 use crate::evaluator::*;
 use std::fs;
 use std::io;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 pub fn start_interactive() {
 
@@ -37,7 +40,8 @@ pub fn start(mut args: impl Iterator<Item = String>) {
     //create_tokens(&mut monkey_lexer);
     let mut monkey_parser = Parser::new(&mut monkey_lexer);
     let program = monkey_parser.parse_programm();
-    let eval_program = eval(program.unwrap().statements);
+    let env = Rc::new(RefCell::new(Environment::new()));
+    let eval_program = eval(program.unwrap().statements, Rc::clone(&env));
     println!("{:#?}", eval_program);
 
 }
