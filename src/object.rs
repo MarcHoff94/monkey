@@ -1,4 +1,6 @@
-use std::{collections::HashMap, fmt::Debug};
+use std::{cell::RefCell, collections::HashMap, fmt::Debug, rc::Rc};
+
+use crate::token::{BlockStatement, Identifier};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyObject {
@@ -92,6 +94,17 @@ impl Object for ReturnValue {}
 impl ObjectInterface for ReturnValue {
     fn inspect(&self) -> String {
         String::from("dummy")
+    }
+}
+
+pub struct Function  {
+    pub params: Vec<Identifier>,
+    pub body: BlockStatement,
+    pub env: Rc<RefCell<Environment>>
+}
+impl Function {
+    pub fn new(params: Vec<Identifier>, body: BlockStatement, env: Rc<RefCell<Environment>>) -> Function {
+        Function { params: params, body: body, env: env }
     }
 }
 

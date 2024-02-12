@@ -47,9 +47,10 @@ fn eval_expr(expr: MonkeyExpression, env: Rc<RefCell<Environment>>) -> Result<Mo
         MonkeyExpression::INTEGERLITERAL(x) => Ok(eval_integer_literal(x)),
         MonkeyExpression::BOOLEAN(x) => Ok(eval_bool(x)),
         MonkeyExpression::PREFIX(x) => eval_prefix_expr(&x.operator, *x.right, Rc::clone(&env)),
-        MonkeyExpression::INFIX(x) => Ok(eval_infix_expr(x.operator.as_str(), *x.left, *x.right, Rc::clone(&env)).unwrap()),
-        MonkeyExpression::IF(x) => Ok(eval_if_expr(x, Rc::clone(&env)).unwrap()),
-        MonkeyExpression::IDENT(x) => Ok(eval_ident(x, Rc::clone(&env)).unwrap()),
+        MonkeyExpression::INFIX(x) => eval_infix_expr(x.operator.as_str(), *x.left, *x.right, Rc::clone(&env)),
+        MonkeyExpression::IF(x) => eval_if_expr(x, Rc::clone(&env)),
+        MonkeyExpression::IDENT(x) => eval_ident(x, Rc::clone(&env)),
+        MonkeyExpression::FUNCTIONLITERAL(x) => eval_functionliteral(x, Rc::clone(&env)),
         _ => panic!("Unknown Expression {:#?}", expr),
     }
 }
@@ -150,5 +151,8 @@ fn eval_ident(ident: Identifier, env: Rc<RefCell<Environment>>) -> Result<Monkey
         Some(x) => Ok(x),
         None => panic!("Undefined Identifier used: {:#?}", ident.value),
     }
+}
 
+fn eval_functionliteral(func_lit: FunctionLiteral, env: Rc<RefCell<Environment>>) -> Result<MonkeyObject, &'static str> {
+    Err("dummy")
 }
