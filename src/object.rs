@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, fmt::Debug, rc::Rc};
+use std::{cell::{Ref, RefCell}, collections::HashMap, fmt::Debug, rc::Rc};
 
 use crate::token::{BlockStatement, Identifier};
 
@@ -9,6 +9,7 @@ pub enum MonkeyObject {
     NULL(Null),
     BLOCK(Block),
     RETURN(ReturnValue),
+    FUNCTION(Function),
 }
 
 impl MonkeyObject {
@@ -19,6 +20,7 @@ impl MonkeyObject {
             Self::NULL(x) => Box::new(x),
             Self::BLOCK(x) => Box::new(x),
             Self::RETURN(x) => Box::new(x),
+            Self::FUNCTION(x) => Box::new(x),
         }
     }
 }
@@ -96,7 +98,7 @@ impl ObjectInterface for ReturnValue {
         String::from("dummy")
     }
 }
-
+#[derive(Debug, PartialEq,Clone)]
 pub struct Function  {
     pub params: Vec<Identifier>,
     pub body: BlockStatement,
@@ -107,22 +109,40 @@ impl Function {
         Function { params: params, body: body, env: env }
     }
 }
+impl Object for Function {}
+impl ObjectInterface for Function {
+    fn inspect(&self) -> String {
+        String::from("dummy")
+    }
+}
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct Environment {
-    store: HashMap<String, MonkeyObject>
+    store: HashMap<String, MonkeyObject>,
+    pub outer: Option<Rc<RefCell<Environment>>>,
 }
 impl Environment {
     pub fn new() -> Environment {
-        Environment { store: HashMap::new() }
+        Environment { store: HashMap::new(), outer: None }
     }
-    pub fn from(hashmap: HashMap<String, MonkeyObject>) -> Environment {
-        Environment{ store: hashmap}
+    pub fn new_enclosed_evironment(hashmap: HashMap<String, MonkeyObject>, env: Rc<RefCell<Environment>>) -> Environment {
+        Environment{ store: hashmap, outer: Some(Rc::clone(&env))}
     }
     pub fn get(&self, key: &String) -> Option<MonkeyObject> {
-        match self.store.get(key) {
-            Some(x) => Some(x.clone()),
-            None => None
+        match &self.outer {
+            Some(x) => {
+                match x.borrow().get(key) {
+                    Some(monkeyobj) => Some(monkeyobj.clone()),
+                    None => match self.store.get(key) {
+                        Some(x) => Some(x.clone()),
+                        None => None,
+                    }
+                }
+            },
+            None => match self.store.get(key) {
+                Some(x) => Some(x.clone()),
+                None => None,
+            }
         }
     }
     pub fn set(&mut self, key: String, value: MonkeyObject) {

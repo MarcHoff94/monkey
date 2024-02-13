@@ -341,21 +341,21 @@ impl<'a> Parser <'a> {
         let args = self.parse_call_arguments();
         Ok(MonkeyExpression::CALL(CallExpression::new(tok, function, args)))
     }
-    fn parse_call_arguments(&mut self) -> Option<Vec<Box<dyn MonkeyExpr>>> {
+    fn parse_call_arguments(&mut self) -> Option<Vec<Box<MonkeyExpression>>> {
 
         if self.peektoken_is(TokenType::RPAREN) {
             self.next_token();
             return None
         }
 
-        let mut args : Vec<Box<dyn MonkeyExpr>> = Vec::new();
+        let mut args : Vec<Box<MonkeyExpression>> = Vec::new();
         self.next_token();
-        args.push(self.parse_expression(Precedence::LOWEST.into_i32()).unwrap().into_expr());
+        args.push(Box::new(self.parse_expression(Precedence::LOWEST.into_i32()).unwrap()));
 
         while self.peektoken_is(TokenType::COMMA) {
             self.next_token();
             self.next_token();
-            args.push(self.parse_expression(Precedence::LOWEST.into_i32()).unwrap().into_expr())
+            args.push(Box::new(self.parse_expression(Precedence::LOWEST.into_i32()).unwrap()))
         }
         
         if !self.expect_peek(TokenType::RPAREN) {

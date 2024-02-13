@@ -51,6 +51,7 @@ fn eval_expr(expr: MonkeyExpression, env: Rc<RefCell<Environment>>) -> Result<Mo
         MonkeyExpression::IF(x) => eval_if_expr(x, Rc::clone(&env)),
         MonkeyExpression::IDENT(x) => eval_ident(x, Rc::clone(&env)),
         MonkeyExpression::FUNCTIONLITERAL(x) => eval_functionliteral(x, Rc::clone(&env)),
+        MonkeyExpression::CALL(x) => eval_function_call(*x.function, x.arguments, Rc::clone(&env)),
         _ => panic!("Unknown Expression {:#?}", expr),
     }
 }
@@ -154,5 +155,34 @@ fn eval_ident(ident: Identifier, env: Rc<RefCell<Environment>>) -> Result<Monkey
 }
 
 fn eval_functionliteral(func_lit: FunctionLiteral, env: Rc<RefCell<Environment>>) -> Result<MonkeyObject, &'static str> {
+    Ok(MonkeyObject::FUNCTION(Function::new(func_lit.parameters, func_lit.blockstatment, Rc::clone(&env))))
+}
+
+fn eval_function_call(function: MonkeyExpression, arguments: Option<Vec<Box<MonkeyExpression>>>, env: Rc<RefCell<Environment>>) -> Result<MonkeyObject, &'static str> {
+   let func =  match function {
+        MonkeyExpression::IDENT(x) => eval_ident(x, Rc::clone(&env)).unwrap(),
+        MonkeyExpression::FUNCTIONLITERAL(x) => eval_functionliteral(x, Rc::clone(&env)).unwrap(),
+        _ => panic!("Could not evaluate function call. Expression: {:#?}", function),
+    };
+    let args = eval_expr_list(arguments, Rc::clone(&env));
     Err("dummy")
+}
+
+fn eval_expr_list(expression_list: Option<Vec<Box<MonkeyExpression>>>, env: Rc<RefCell<Environment>>) -> Option<Vec<MonkeyObject>> {
+    if expression_list.is_none() {
+        return None
+    }
+    let mut result: Vec<MonkeyObject> = Vec::new();
+    for expr in expression_list.unwrap() {
+        match eval_expr(*expr, Rc::clone(&env)) {
+            Ok(x) => result.push(x),
+            Err(x) => panic!("{}",x),
+        }
+    };
+
+    if result.len() > 0 {
+        return Some(result)
+    }
+
+    None
 }

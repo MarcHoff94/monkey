@@ -1,7 +1,7 @@
 use crate::token::*;
 use std::fmt::Debug;
 
-pub trait MonkeyExpr: Expression + Node + Debug {}
+pub trait MonkeyExpr: Expression + Node + Debug + Clone {}
 
 pub trait Node {
     fn token_literal(&self) -> Option<&String>;
@@ -21,7 +21,7 @@ pub enum NodeType {
     EXPRESSION,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MonkeyExpression {
     IDENT(Identifier),
     INTEGERLITERAL(IntegerLiteral),
@@ -33,18 +33,18 @@ pub enum MonkeyExpression {
     CALL(CallExpression),
 }
 impl MonkeyExpression {
-    pub fn into_expr(self) -> Box<dyn MonkeyExpr> {
-        match self {
-            Self::IDENT(x) => Box::new(x),
-            Self::INTEGERLITERAL(x) => Box::new(x),
-            Self::BOOLEAN(x) => Box::new(x),
-            Self::PREFIX(x) => Box::new(x),
-            Self::INFIX(x) => Box::new(x),
-            Self::IF(x) => Box::new(x),
-            Self::FUNCTIONLITERAL(x) => Box::new(x),
-            Self::CALL(x) => Box::new(x),
-        }
-    }
+    // pub fn into_expr(self) -> Box<dyn MonkeyExpr> {
+    //     match self {
+    //         Self::IDENT(x) => Box::new(x),
+    //         Self::INTEGERLITERAL(x) => Box::new(x),
+    //         Self::BOOLEAN(x) => Box::new(x),
+    //         Self::PREFIX(x) => Box::new(x),
+    //         Self::INFIX(x) => Box::new(x),
+    //         Self::IF(x) => Box::new(x),
+    //         Self::FUNCTIONLITERAL(x) => Box::new(x),
+    //         Self::CALL(x) => Box::new(x),
+    //     }
+    // }
 }
 impl Node for MonkeyExpression {
     fn token_literal(&self) -> Option<&String> {
@@ -70,7 +70,7 @@ impl Expression for MonkeyExpression {
 }
 impl MonkeyExpr for MonkeyExpression {}
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
     LET(LetStatement),
     RETURN(ReturnStatement),

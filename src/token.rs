@@ -7,7 +7,7 @@ use crate::ast::Statement;
 use crate::ast::NodeType;
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token{
     pub tokentype: TokenType,
     pub literal: String,
@@ -80,7 +80,7 @@ impl TokenType {
         return result
     }
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct LetStatement {
     pub token: Token,
     pub name: Identifier,
@@ -107,7 +107,7 @@ impl Node for LetStatement {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct ReturnStatement {
     token: Token,
     pub return_value: MonkeyExpression,
@@ -133,7 +133,7 @@ impl Node for ReturnStatement {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct ExpressionStatement {
     token: Token,
     pub expression: MonkeyExpression
@@ -165,7 +165,7 @@ impl Node for ExpressionStatement {
 //     }
 // }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BlockStatement {
     token: Token,
     pub statements: Vec<Statement>,
@@ -193,7 +193,7 @@ impl Expression for BlockStatement {
     fn expression_node(&self) {}
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct Identifier {
     pub token: Token,
     pub value: String, 
@@ -223,7 +223,7 @@ impl Expression for Identifier {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IntegerLiteral {
     pub token: Token,
     pub value: i64,
@@ -251,7 +251,7 @@ impl Expression for IntegerLiteral {
     fn expression_node(&self) {}
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct Boolean {
     pub token: Token,
     pub value: bool,
@@ -278,7 +278,7 @@ impl Node for Boolean {
 impl Expression for Boolean {
     fn expression_node(&self) {}
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct PrefixExpression {
     pub token: Token,
     pub operator: String,
@@ -309,7 +309,7 @@ impl Expression for PrefixExpression {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct InfixExpression {
     pub token: Token,
     pub operator: String,
@@ -343,11 +343,11 @@ impl Expression for InfixExpression {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct FunctionLiteral {
     token: Token,
-    parameters: Vec<Identifier>,
-    blockstatment: BlockStatement,
+    pub parameters: Vec<Identifier>,
+    pub blockstatment: BlockStatement,
 }
 impl FunctionLiteral {
     pub fn new(tok: Token, params: Vec<Identifier>, blockstatement: BlockStatement) -> FunctionLiteral {
@@ -371,7 +371,7 @@ impl Node for FunctionLiteral {
 impl Expression for FunctionLiteral {
     fn expression_node(&self) {}
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct IfExpression {
     tok: Token,
     pub condition: Box<MonkeyExpression>,
@@ -397,15 +397,15 @@ impl Expression for IfExpression {
     fn expression_node(&self) {}
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq,Clone)]
 pub struct CallExpression {
     token: Token,
-    function: Box<MonkeyExpression>,
-    arguments: Option<Vec<Box<dyn MonkeyExpr>>>,
+    pub function: Box<MonkeyExpression>,
+    pub arguments: Option<Vec<Box<MonkeyExpression>>>,
 }
 
 impl  CallExpression {
-    pub fn new(tok: Token, function: MonkeyExpression, arguments: Option<Vec<Box<dyn MonkeyExpr>>>) -> CallExpression {
+    pub fn new(tok: Token, function: MonkeyExpression, arguments: Option<Vec<Box<MonkeyExpression>>>) -> CallExpression {
         CallExpression { token: tok, function: Box::new(function), arguments }
     }
 }
